@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Lilita+One&display=swap" rel="stylesheet">
 
 <!-- AR: A-Frame + MindAR (reconocimiento de imágenes) -->
-<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
 <style>
@@ -34,8 +34,9 @@ body{background:transparent}
 
 /* Contenedor de la escena AR (a pantalla completa) */
 #ar{position:absolute;inset:0;overflow:hidden;z-index:0}   /* z-index:0 crea su propio nivel: el video (z-index negativo) queda dentro y visible */
-#ar video{object-fit:cover}
-#ar a-scene,#ar canvas{background:transparent!important}
+#ar video{position:absolute!important;z-index:0!important;display:block!important;visibility:visible!important;opacity:1!important}
+#ar a-scene{position:absolute!important;inset:0;z-index:1!important;background:transparent!important}
+#ar canvas{background:transparent!important}
 
 /* ---------- Botones fijos ---------- */
 .ar-volver{position:fixed;top:14px;left:14px;z-index:50;display:inline-flex;align-items:center;gap:6px;
@@ -147,7 +148,7 @@ body.demo{background:linear-gradient(160deg,#fde2a8,#f8b04a)}
 
 <!-- Escena AR: las anclas se crean desde la lista CARTAS (abajo) -->
 <div id="ar">
-  <a-scene id="escenaAr"
+  <a-scene id="escenaAr" background="transparent: true"
     mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 0.001;"
     color-space="sRGB"
     renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true"
@@ -420,7 +421,16 @@ function falloCamara(e){
   else error("No pudimos iniciar la cámara ni leer las cartas. Revisa que targets.mind tenga las 18 imágenes (00 a 17) y se haya compilado con MindAR 1.2.x.");
 }
 
-escena.addEventListener("arReady", () => { pantalla(null); $("guia").classList.add("on"); });
+escena.addEventListener("arReady", () => {
+  pantalla(null); $("guia").classList.add("on");
+  setTimeout(() => {
+    const v = document.querySelector("#ar video");
+    if(!v){ avisar("No se encontró el video de la cámara"); console.warn("Sin <video> en #ar"); return; }
+    console.log("Video cámara:", v.videoWidth + "x" + v.videoHeight, "pausado:", v.paused);
+    if(v.paused) v.play().catch(()=>{});
+    if(!v.videoWidth) avisar("La cámara no está enviando imagen");
+  }, 800);
+});
 escena.addEventListener("arError", e => falloCamara(e && e.detail ? e.detail : e));
 
 $("btnCamara").addEventListener("click", arrancar);
