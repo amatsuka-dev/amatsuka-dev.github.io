@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ArSweetCards | Sweet Help</title>
+<link rel="icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Lilita+One&display=swap" rel="stylesheet">
+
+<!-- AR: A-Frame + MindAR (reconocimiento de imágenes) -->
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+<style>
+@font-face{
+  font-family:"Choco Taste Trial";
+  src:url("Choco Taste Trial.otf") format("opentype"),
+      url("Choco%20Taste%20Trial.otf") format("opentype");
+  font-display:swap;
+}
+:root{
+  --rosa:#ff9a9a; --rosa-carta:#f28f95; --crema:#f8f2dc; --marron:#8b5e3c;
+  --oscuro:#2a1408; --antojo:#8a3f55; --flecha:#bc5d75; --agregar:#e0527a;
+  --titulo:"Choco Taste Trial","Lobster","Brush Script MT",cursive;
+  --cuerpo:"Lilita One",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#2a1408;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+
+/* Contenedor de la escena AR (a pantalla completa) */
+#ar{position:absolute;inset:0;overflow:hidden}
+#ar video{object-fit:cover}
+
+/* ---------- Botones fijos ---------- */
+.ar-volver{position:fixed;top:14px;left:14px;z-index:50;display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--cuerpo);font-size:1rem;color:#fff;text-decoration:none;
+  background:rgba(42,20,8,.55);backdrop-filter:blur(6px);padding:9px 16px;border-radius:999px}
+.ar-volver:hover{background:rgba(42,20,8,.75)}
+.ar-cartasbtn{position:fixed;top:62px;left:14px;z-index:50;font-family:var(--cuerpo);font-size:.95rem;color:#fff;border:0;cursor:pointer;
+  background:rgba(224,82,122,.9);padding:8px 16px;border-radius:999px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.ar-cartasbtn:hover{background:var(--agregar)}
+.sh-cart-wrap{position:fixed;top:10px;right:14px;z-index:50}
+.sh-ibtn{position:relative;background:none;border:0;padding:0;cursor:pointer;line-height:0}
+.sh-ibtn img{width:56px;height:56px}
+
+/* ---------- Pantalla de inicio / carga / error ---------- */
+.ar-pantalla{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:24px;text-align:center;background:linear-gradient(160deg,#fde2a8,#f8b04a)}
+.ar-pantalla[hidden]{display:none}
+.ar-pantalla img.logo{width:110px;height:auto;display:block;animation:flota 3.4s ease-in-out infinite}
+.ar-titulo{margin:0;font-family:var(--titulo);font-weight:400;font-size:clamp(2.6rem,9vw,4.4rem);color:var(--marron);line-height:1}
+.ar-sub{margin:0;max-width:340px;font-family:var(--cuerpo);font-size:1.05rem;color:var(--antojo);line-height:1.3}
+.ar-btn{font-family:var(--cuerpo);font-size:1.3rem;color:#fff;background:var(--agregar);border:0;border-radius:999px;padding:12px 34px;cursor:pointer;
+  box-shadow:0 6px 16px rgba(0,0,0,.25);transition:transform .25s cubic-bezier(.3,1.8,.5,1)}
+.ar-btn:hover{transform:scale(1.07,.95)}
+.ar-btn:active{transform:scale(.9,1.1)}
+.ar-btn.sec{background:#fff;color:var(--agregar);font-size:1.05rem;padding:9px 24px;border:3px solid var(--agregar)}
+.ar-nota{margin:0;max-width:320px;font-size:.8rem;color:var(--marron);opacity:.85}
+.ar-pantalla.oscura{background:rgba(42,20,8,.82);backdrop-filter:blur(4px)}
+.ar-pantalla.oscura .ar-titulo{color:#fff}
+.ar-pantalla.oscura .ar-sub{color:#ffe0e1}
+.rueda{width:54px;height:54px;border-radius:50%;border:6px solid rgba(255,255,255,.35);border-top-color:#fff;animation:gira .8s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+@keyframes flota{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-12px) rotate(2deg)}}
+
+/* ---------- Guía de escaneo ---------- */
+.ar-guia{position:fixed;left:0;right:0;top:50%;z-index:20;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:14px;pointer-events:none;
+  opacity:0;transition:opacity .35s}
+.ar-guia.on{opacity:1}
+.ar-marco{width:min(62vw,260px);aspect-ratio:3/4;position:relative}
+.ar-marco i{position:absolute;width:34px;height:34px;border:5px solid #fff;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));animation:late 1.6s ease-in-out infinite}
+.ar-marco i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0;border-radius:14px 0 0 0}
+.ar-marco i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0;border-radius:0 14px 0 0}
+.ar-marco i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0;border-radius:0 0 0 14px}
+.ar-marco i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0;border-radius:0 0 14px 0}
+@keyframes late{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.ar-guia span{font-family:var(--cuerpo);font-size:1rem;color:#fff;background:rgba(42,20,8,.6);padding:7px 16px;border-radius:999px}
+
+/* ---------- Panel de la carta reconocida ---------- */
+.ar-panel{position:fixed;left:50%;bottom:16px;z-index:30;width:min(440px,calc(100vw - 24px));transform:translate(-50%,130%);transition:transform .45s cubic-bezier(.3,1.4,.5,1);
+  background:var(--crema);border:6px solid var(--rosa-carta);border-radius:30px;padding:14px 16px 16px;box-shadow:0 12px 34px rgba(0,0,0,.4)}
+.ar-panel.on{transform:translate(-50%,0)}
+.ar-fila{display:flex;gap:14px;align-items:center}
+.ar-miniatura{width:84px;flex:none;height:auto;display:block;border-radius:14px}
+.ar-datos{flex:1;min-width:0}
+.ar-nombre{margin:0;font-family:var(--titulo);font-weight:400;font-size:2rem;line-height:1;color:var(--marron)}
+.ar-precio{font-family:var(--cuerpo);font-size:1.25rem;color:var(--flecha);margin-top:2px}
+.ar-ing{margin:8px 0 0;font-size:.74rem;line-height:1.3;color:var(--oscuro)}
+.ar-ing b{color:var(--antojo)}
+.ar-mas{flex:none;width:54px;height:54px;border-radius:50%;border:3px solid var(--agregar);background:var(--agregar);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-family:var(--cuerpo);font-size:2.2rem;line-height:1;text-decoration:none;cursor:pointer;transition:transform .25s cubic-bezier(.3,1.8,.5,1),background .15s,color .15s}
+.ar-mas:hover{background:#fff;color:var(--agregar);transform:scale(1.12)}
+.ar-mas:active{transform:scale(.85)}
+.ar-kit{margin:10px 0 0;text-align:center;font-family:var(--cuerpo);font-size:.8rem;color:var(--antojo)}
+.ar-kit img{height:1.6em;width:auto;vertical-align:middle;margin-left:2px}
+
+/* ---------- Aviso ---------- */
+.ar-toast{position:fixed;left:50%;top:78px;z-index:80;transform:translate(-50%,-20px);opacity:0;pointer-events:none;
+  background:var(--agregar);color:#fff;font-family:var(--cuerpo);font-size:1rem;padding:9px 20px;border-radius:999px;box-shadow:0 6px 18px rgba(0,0,0,.35);
+  transition:transform .3s cubic-bezier(.3,1.6,.5,1),opacity .25s;max-width:calc(100vw - 32px);text-align:center}
+.ar-toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Modo prueba (?demo=1) ---------- */
+.ar-demo{position:fixed;top:108px;left:50%;transform:translateX(-50%);z-index:45;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:calc(100vw - 24px)}
+.ar-demo button{font-family:var(--cuerpo);font-size:.85rem;padding:6px 12px;border-radius:999px;border:2px solid var(--rosa-carta);background:var(--crema);color:var(--marron);cursor:pointer}
+.ar-demo button:hover{background:var(--rosa-carta);color:#fff}
+body.demo{background:linear-gradient(160deg,#fde2a8,#f8b04a)}
+
+/* ---------- Galería de cartas digitales ---------- */
+.gal{position:fixed;inset:0;z-index:70;background:linear-gradient(160deg,#fde2a8,#f8b04a);display:flex;flex-direction:column;overflow:hidden}
+.gal[hidden]{display:none}
+.gal-top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px}
+.gal-top h2{margin:0;font-family:var(--titulo);font-weight:400;font-size:2rem;color:var(--marron);line-height:1}
+.gal-x{font-family:var(--cuerpo);font-size:1rem;color:#fff;background:var(--agregar);border:0;border-radius:999px;padding:8px 18px;cursor:pointer}
+.gal-tip{margin:0;padding:0 16px 8px;font-family:var(--cuerpo);font-size:.9rem;color:var(--antojo)}
+.gal-grid{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;padding:6px 16px 24px;align-content:start}
+.gal-item{background:#fff;border:0;border-radius:14px;padding:6px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.18);transition:transform .2s}
+.gal-item:hover{transform:scale(1.04)}
+.gal-item img{width:100%;height:auto;display:block;border-radius:10px}
+.gal-item span{display:block;margin-top:4px;font-family:var(--cuerpo);font-size:.78rem;color:var(--marron)}
+/* Visor: carta grande sobre fondo blanco, pensada para apuntarle otra cámara */
+.vis{position:fixed;inset:0;z-index:75;background:#fff;display:flex;align-items:center;justify-content:center}
+.vis[hidden]{display:none}
+.vis img{max-width:min(92vw,calc(92vh * .75));max-height:88vh;width:auto;height:auto;display:block;border-radius:12px}
+.vis-x,.vis-n,.vis-p{position:absolute;border:0;cursor:pointer;font-family:var(--cuerpo);color:#fff;background:rgba(224,82,122,.92);border-radius:999px}
+.vis-x{top:12px;right:12px;font-size:1rem;padding:8px 18px}
+.vis-n,.vis-p{top:50%;transform:translateY(-50%);width:48px;height:48px;font-size:1.8rem;line-height:1}
+.vis-p{left:8px}.vis-n{right:8px}
+.vis-nom{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-family:var(--cuerpo);font-size:.85rem;color:var(--marron);opacity:.7;pointer-events:none}
+
+@media (prefers-reduced-motion: reduce){.ar-pantalla img.logo,.ar-marco i{animation:none}}
+</style>
+</head>
+<body>
+
+<a class="ar-volver" href="productos.html">&#8592; Volver</a>
+<button class="ar-cartasbtn" id="btnCartas" type="button">🃏 Ver cartas</button>
+<div class="sh-cart-wrap">
+  <button class="sh-ibtn" id="shCartBtn" aria-label="Carrito"><img src="carrito.svg" alt="carrito"><span class="sh-badge">0</span></button>
+</div>
+
+<!-- Escena AR: las anclas se crean desde la lista CARTAS (abajo) -->
+<div id="ar">
+  <a-scene id="escenaAr"
+    mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 0.001;"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+    <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
+    <a-light type="ambient" color="#ffffff" intensity="1.1"></a-light>
+    <a-light type="directional" color="#fff1e0" intensity="1.2" position="0.5 1 1"></a-light>
+  </a-scene>
+</div>
+
+<!-- Inicio -->
+<section class="ar-pantalla" id="pInicio">
+  <img class="logo" src="pinky.svg" alt="Pinky" onerror="this.style.display='none'">
+  <h1 class="ar-titulo">ArSweetCards</h1>
+  <p class="ar-sub">Apunta la cámara a una carta Sweet Help y mira tu postre cobrar vida.</p>
+  <button class="ar-btn" id="btnCamara">Activar cámara</button>
+  <button class="ar-btn sec" id="btnCartas2" type="button">Ver cartas digitales</button>
+  <p class="ar-nota">Te pediremos permiso para usar la cámara. La imagen no se guarda ni se envía a ningún lado.</p>
+</section>
+
+<!-- Cargando -->
+<section class="ar-pantalla oscura" id="pCarga" hidden>
+  <div class="rueda"></div>
+  <p class="ar-sub">Preparando la cámara…</p>
+</section>
+
+<!-- Error -->
+<section class="ar-pantalla oscura" id="pError" hidden>
+  <h2 class="ar-titulo" style="font-size:2.4rem">¡Ups!</h2>
+  <p class="ar-sub" id="errorTexto"></p>
+  <button class="ar-btn" id="btnReintentar">Intentar de nuevo</button>
+</section>
+
+<!-- Guía de escaneo -->
+<div class="ar-guia" id="guia" aria-hidden="true">
+  <div class="ar-marco"><i></i><i></i><i></i><i></i></div>
+  <span>Apunta a una carta Sweet Help</span>
+</div>
+
+<!-- Panel de la carta -->
+<div class="ar-panel" id="panel" role="status" aria-live="polite">
+  <div class="ar-fila">
+    <img class="ar-miniatura" id="pImg" src="" alt="">
+    <div class="ar-datos">
+      <h2 class="ar-nombre" id="pNombre"></h2>
+      <div class="ar-precio" id="pPrecio"></div>
+      <p class="ar-ing"><b id="pIngEt">Ingredientes:</b> <span id="pIng"></span></p>
+    </div>
+    <a class="ar-mas" id="pMas" href="#" role="button" aria-label="Agregar al carrito" data-agregar data-id="" data-nombre="" data-precio="" data-img="">+</a>
+  </div>
+  <p class="ar-kit" id="pKit">El 10% de tu compra va destinado a un kit alimenticio <img src="kitmini.svg" alt="" onerror="this.remove()"></p>
+</div>
+
+<!-- Galería de cartas digitales -->
+<section class="gal" id="gal" hidden>
+  <div class="gal-top">
+    <h2>Cartas digitales</h2>
+    <button class="gal-x" id="galX" type="button">Cerrar</button>
+  </div>
+  <p class="gal-tip">Toca una carta para verla grande y apúntale la cámara desde otro celular.</p>
+  <div class="gal-grid" id="galGrid"></div>
+</section>
+<div class="vis" id="vis" hidden>
+  <img id="visImg" src="" alt="">
+  <button class="vis-p" id="visP" type="button" aria-label="Anterior">&#8249;</button>
+  <button class="vis-n" id="visN" type="button" aria-label="Siguiente">&#8250;</button>
+  <button class="vis-x" id="visX" type="button">Cerrar</button>
+  <div class="vis-nom" id="visNom"></div>
+</div>
+
+<div class="ar-toast" id="toast" role="status"></div>
+<div class="ar-demo" id="demo" hidden></div>
+
+<script>
+/* =====================================================================
+   ARSWEETCARDS  —  reconocimiento de cartas con la cámara
+
+   CÓMO FUNCIONA
+   1) Las imágenes de TUS cartas se "compilan" en un archivo  targets.mind
+      (MindAR aprende a reconocerlas). Se hace una sola vez:
+        https://hiukim.github.io/mind-ar-js-doc/tools/compile
+      (Ahora se usa un targets.mind con 12 cartas; el orden está en la lista CARTAS.)
+      a la MISMA carpeta que este HTML.
+   2) Cada carta de la lista CARTAS se enlaza con su posición en ese
+      archivo mediante  indice  (0 = 00.png, 1 = 01.png, etc.).
+   3) Al reconocer una carta aparece su modelo 3D encima y un panel con
+      nombre, precio, ingredientes y el botón + para el carrito.
+
+   VER LAS CARTAS EN DIGITAL
+   - Botón "Ver cartas" (o abre  arsweetcards.html?cartas=1 en el
+     computador). Muestra las cartas en pantalla; apúntales la cámara
+     de OTRO celular que tenga abierto el AR.
+
+   PRUEBA SIN CARTAS:  arsweetcards.html?demo=1  simula cada carta.
+   IMPORTANTE: la cámara solo funciona con HTTPS (o localhost).
+   ===================================================================== */
+const POSTRE_ING = "leche entera, leche condensada, crema de leche, bizcocho de ";
+const CARTAS = [
+  { indice: 1,  tipo: "postre", id: "1", nombre: "Maracuyá Tropical", precio: 7500, img: "cardmaracuyatropical.svg", carta: "cartas/00.png",
+    ingredientes: POSTRE_ING + "vainilla, pulpa de maracuyá", modelo: "modelos/maracuyatropical.glb" },
+  { indice: 2,  tipo: "postre", id: "2", nombre: "Mora Silvestre", precio: 7500, img: "cardmorasilvestre.svg", carta: "cartas/01.png",
+    ingredientes: POSTRE_ING + "vainilla, mermelada de mora", modelo: "modelos/morasilvestre.glb" },
+  { indice: null,  tipo: "postre", id: "3", nombre: "Fresa Tentación", precio: 7500, img: "cardfresatentacion.svg", carta: "cartas/02.png",
+    ingredientes: POSTRE_ING + "vainilla, mermelada de fresa", modelo: "modelos/fresatentacion.glb" },
+  { indice: 3,  tipo: "postre", id: "4", nombre: "Choco Milo", precio: 7500, img: "cardchocomilo.svg", carta: "cartas/03.png",
+    ingredientes: POSTRE_ING + "chocolate, Milo", modelo: "modelos/chocomilo.glb" },
+  { indice: 4,  tipo: "postre", id: "5", nombre: "Choco Fresa", precio: 8000, img: "cardchocofresa.svg", carta: "cartas/04.png",
+    ingredientes: POSTRE_ING + "chocolate, mermelada de fresa", modelo: "modelos/chocofresa.glb" },
+  { indice: null,  tipo: "postre", id: "6", nombre: "Choco Mix", precio: 7500, img: "cardchocomilomix.svg", carta: "cartas/05.png",
+    ingredientes: POSTRE_ING + "mixto, Milo", modelo: "modelos/chocomilomix.glb" },
+
+  /* Cartas de colección (edita los textos a tu gusto) */
+  { indice: null,  tipo: "coleccion", nombre: "Pinky Lisa",        carta: "cartas/06.png", texto: "Pinky se inspira en La Mona Lisa." },
+  { indice: 5,  tipo: "coleccion", nombre: "Pinky Grito",       carta: "cartas/07.png", texto: "Pinky se inspira en El grito, de Munch." },
+  { indice: 6,  tipo: "coleccion", nombre: "Pinky Noche",       carta: "cartas/08.png", texto: "Pinky se inspira en La noche estrellada, de Van Gogh." },
+  { indice: 7,  tipo: "coleccion", nombre: "Pinky Creación",    carta: "cartas/09.png", texto: "Pinky se inspira en La creación de Adán." },
+  { indice: 8, tipo: "coleccion", nombre: "Pinky Vitruvio",    carta: "cartas/10.png", texto: "Pinky se inspira en el Hombre de Vitruvio." },
+  { indice: 11, tipo: "coleccion", nombre: "Pinky Chambeadora", carta: "cartas/11.png", texto: "Pinky se pone a trabajar por quienes más lo necesitan." },
+  { indice: null, tipo: "coleccion", nombre: "Pinky Repartidora", carta: "cartas/12.png", texto: "Pinky lleva la ayuda en moto hasta quien la necesita." },
+  { indice: null, tipo: "coleccion", nombre: "Pinky Repostera",   carta: "cartas/13.png", texto: "Pinky prepara los postres que ayudan a combatir el hambre." },
+  { indice: null, tipo: "coleccion", nombre: "Punto de Venta",    carta: "cartas/14.png", texto: "Aquí se venden los postres de Sweet Help." },
+  { indice: 9, tipo: "coleccion", nombre: "Kit",               carta: "cartas/15.png", texto: "Con cada compra, parte del dinero se destina a un kit alimenticio.", kit: true },
+  { indice: 10, tipo: "coleccion", nombre: "Postre",            carta: "cartas/16.png", texto: "La estrella de Sweet Help: el postre tres leches." },
+  { indice: 0, tipo: "coleccion", nombre: "Pinky Arroz",       carta: "cartas/17.png", texto: "Pinky se disfraza de arroz para ayudar contra el hambre." }
+];
+
+/* Ajustes del modelo 3D sobre la carta */
+const AR = {
+  anchoModelo: 0.75,     // ancho del modelo en "anchos de carta" (1 = tan ancho como la carta)
+  alturaSobreCarta: 0.03,// cuánto se levanta de la carta
+  giroMs: 9000,          // vuelta completa del modelo (ms). 0 = no gira
+  ocultarTrasMs: 1500    // ms que se queda el panel después de perder la carta
+};
+
+const MONEDA = "$", LOCALE = "es-CO";
+const fmt = n => MONEDA + Number(n).toLocaleString(LOCALE);
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const demo = params.get("demo") === "1";
+const soloCartas = params.get("cartas") === "1";
+
+const escena = $("escenaAr");
+const THREE = AFRAME.THREE;
+let actual = -1, tOcultar = null, tToast = null;
+
+/* ---------- Panel ---------- */
+function mostrarCarta(i){
+  const c = CARTAS[i]; if(!c) return;
+  clearTimeout(tOcultar);
+  $("guia").classList.remove("on");
+  if(actual !== i){
+    actual = i;
+    const esPostre = c.tipo === "postre";
+    $("pImg").src = c.carta || c.img || ""; $("pImg").alt = c.nombre;
+    $("pNombre").textContent = c.nombre;
+    $("pPrecio").textContent = esPostre ? fmt(c.precio) : "";
+    $("pPrecio").hidden = !esPostre;
+    $("pIngEt").hidden = !esPostre;
+    $("pIng").textContent = esPostre ? c.ingredientes : (c.texto || "");
+    const m = $("pMas");
+    m.hidden = !esPostre;
+    if(esPostre){
+      m.dataset.id = c.id; m.dataset.nombre = c.nombre; m.dataset.precio = String(c.precio); m.dataset.img = c.img;
+    }
+    $("pKit").hidden = !(esPostre || c.kit);
+    if(navigator.vibrate) try{ navigator.vibrate(30); }catch(e){}
+  }
+  $("panel").classList.add("on");
+}
+function ocultarCarta(i){
+  if(i !== actual) return;
+  clearTimeout(tOcultar);
+  tOcultar = setTimeout(() => {
+    $("panel").classList.remove("on");
+    actual = -1;
+    if(!demo) $("guia").classList.add("on");
+  }, AR.ocultarTrasMs);
+}
+
+/* + : aviso de confirmación (el carrito lo maneja carrito.js con data-agregar) */
+$("pMas").addEventListener("click", e => {
+  e.preventDefault();
+  const n = $("pMas"); n.textContent = "✓";
+  setTimeout(() => { n.textContent = "+"; }, 1100);
+  avisar("¡Agregado! " + (CARTAS[actual] ? CARTAS[actual].nombre : "") + " 🛒");
+});
+function avisar(txt){
+  const t = $("toast"); t.textContent = txt; t.classList.add("show");
+  clearTimeout(tToast); tToast = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+/* ---------- Modelos 3D encima de cada carta ---------- */
+function crearAnclas(){
+  CARTAS.forEach((c, i) => {
+    if(c.indice == null) return;                                // carta que aún no está en targets.mind
+    const ancla = document.createElement("a-entity");
+    ancla.setAttribute("mindar-image-target", "targetIndex: " + c.indice);
+
+    ancla.addEventListener("targetFound", () => mostrarCarta(i));
+    ancla.addEventListener("targetLost", () => ocultarCarta(i));
+    escena.appendChild(ancla);
+    if(!c.modelo) return;                                       // carta de colección: sin modelo 3D
+
+    const giro = document.createElement("a-entity");           // gira alrededor de la vertical del modelo
+    if(AR.giroMs > 0) giro.setAttribute("animation", `property: rotation; from: 0 0 0; to: 0 0 360; dur: ${AR.giroMs}; easing: linear; loop: true`);
+    giro.setAttribute("animation__flota", "property: position; from: 0 0 0; to: 0 0 0.05; dir: alternate; dur: 1600; easing: easeInOutSine; loop: true");
+
+    const modelo = document.createElement("a-entity");
+    modelo.setAttribute("gltf-model", c.modelo);
+    modelo.addEventListener("model-loaded", () => ajustarModelo(modelo));
+    modelo.addEventListener("model-error", () => {
+      console.warn("No se pudo cargar el modelo 3D:", c.modelo);
+      giro.removeChild(modelo);
+      const r = document.createElement("a-cylinder");          // marcador de respaldo
+      r.setAttribute("radius", "0.25"); r.setAttribute("height", "0.3");
+      r.setAttribute("color", "#f28f95"); r.setAttribute("rotation", "90 0 0");
+      r.setAttribute("position", "0 0 0.15");
+      giro.appendChild(r);
+    });
+    giro.appendChild(modelo);
+    ancla.appendChild(giro);
+  });
+}
+
+/* Escala el modelo al ancho elegido, lo apoya sobre la carta y lo pone "de pie" */
+function ajustarModelo(el){
+  try{
+    const obj = el.getObject3D("mesh"); if(!obj) return;
+    obj.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(obj);
+    const size = box.getSize(new THREE.Vector3()), centro = box.getCenter(new THREE.Vector3());
+    const k = AR.anchoModelo / (Math.max(size.x, size.z) || 1);
+    el.setAttribute("scale", `${k} ${k} ${k}`);
+    el.setAttribute("rotation", "90 0 0");                      // la carta es el "suelo": el modelo se para sobre ella
+    el.setAttribute("position", `${-centro.x * k} ${centro.z * k} ${-box.min.y * k + AR.alturaSobreCarta}`);
+  }catch(e){ console.warn("No se pudo ajustar el modelo", e); }
+}
+
+/* ---------- Cámara ---------- */
+const sistema = () => escena.systems["mindar-image-system"];
+
+function pantalla(id){
+  ["pInicio", "pCarga", "pError"].forEach(p => { $(p).hidden = (p !== id); });
+}
+function error(msg){
+  $("errorTexto").textContent = msg;
+  pantalla("pError");
+  $("guia").classList.remove("on");
+}
+async function arrancar(){
+  pantalla("pCarga");
+  try{
+    /* Comprobamos que targets.mind exista y se pueda leer antes de abrir la cámara */
+    const res = await fetch("targets.mind", { cache: "no-store" });
+    if(!res.ok) throw { name: "MindNoEncontrado", status: res.status };
+    const r = sistema().start();
+    if(r && r.catch) r.catch(e => falloCamara(e));
+  }catch(e){
+    if(e && e.name === "MindNoEncontrado") error("No se encontró targets.mind (error " + e.status + "). Revisa que esté en la misma carpeta que este HTML y con ese nombre exacto.");
+    else if(e instanceof TypeError) error("No se pudo leer targets.mind. Si abriste el archivo directo desde tu computador, súbelo a un sitio con HTTPS o usa localhost.");
+    else falloCamara(e);
+  }
+}
+function falloCamara(e){
+  console.warn(e);
+  const n = e && e.name;
+  if(n === "NotAllowedError" || n === "PermissionDeniedError") error("No pudimos usar la cámara. Permite el acceso en el navegador y vuelve a intentarlo.");
+  else if(!window.isSecureContext) error("La cámara solo funciona en una página segura (HTTPS). Abre esta página desde tu sitio publicado.");
+  else error("No pudimos iniciar la cámara ni leer las cartas. Revisa que targets.mind tenga las 18 imágenes (00 a 17) y se haya compilado con MindAR 1.2.x.");
+}
+
+escena.addEventListener("arReady", () => { pantalla(null); $("guia").classList.add("on"); });
+escena.addEventListener("arError", e => falloCamara(e && e.detail ? e.detail : e));
+
+$("btnCamara").addEventListener("click", arrancar);
+$("btnReintentar").addEventListener("click", () => {
+  try{ sistema().stop(); }catch(e){}
+  arrancar();
+});
+
+/* ---------- Galería de cartas digitales ---------- */
+let visIdx = 0;
+function construirGaleria(){
+  const g = $("galGrid"); g.innerHTML = "";
+  CARTAS.forEach((c, i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "gal-item";
+    const im = document.createElement("img");
+    im.src = c.carta; im.alt = c.nombre; im.loading = "lazy";
+    const sp = document.createElement("span"); sp.textContent = c.nombre;
+    b.appendChild(im); b.appendChild(sp);
+    b.addEventListener("click", () => abrirVisor(i));
+    g.appendChild(b);
+  });
+}
+function abrirGaleria(){ $("gal").hidden = false; }
+function cerrarGaleria(){
+  $("gal").hidden = true; cerrarVisor();
+  if(soloCartas) pantalla("pInicio");
+}
+function abrirVisor(i){
+  visIdx = (i + CARTAS.length) % CARTAS.length;
+  const c = CARTAS[visIdx];
+  $("visImg").src = c.carta; $("visImg").alt = c.nombre;
+  $("visNom").textContent = c.nombre;
+  $("vis").hidden = false;
+}
+function cerrarVisor(){ $("vis").hidden = true; }
+$("btnCartas").addEventListener("click", abrirGaleria);
+$("btnCartas2").addEventListener("click", abrirGaleria);
+$("galX").addEventListener("click", cerrarGaleria);
+$("visX").addEventListener("click", cerrarVisor);
+$("visP").addEventListener("click", () => abrirVisor(visIdx - 1));
+$("visN").addEventListener("click", () => abrirVisor(visIdx + 1));
+document.addEventListener("keydown", e => {
+  if($("vis").hidden) return;
+  if(e.key === "ArrowLeft") abrirVisor(visIdx - 1);
+  else if(e.key === "ArrowRight") abrirVisor(visIdx + 1);
+  else if(e.key === "Escape") cerrarVisor();
+});
+construirGaleria();
+
+/* ---------- Inicio ---------- */
+function iniciar(){
+  if(demo){
+    document.body.classList.add("demo");
+    pantalla(null);
+    const d = $("demo"); d.hidden = false;
+    CARTAS.forEach((c, i) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = "Simular: " + c.nombre;
+      b.onclick = () => mostrarCarta(i);
+      d.appendChild(b);
+    });
+    return;     // en modo prueba no se activa la cámara ni la escena AR
+  }
+  crearAnclas();
+}
+if(soloCartas){            // ?cartas=1 -> abre directo la galería (útil en el computador)
+  pantalla("pInicio");
+  abrirGaleria();
+}
+if(demo) iniciar();
+else if(escena.hasLoaded) iniciar();
+else escena.addEventListener("loaded", iniciar);
+</script>
+<script src="carrito.js"></script>
+</body>
+</html>
