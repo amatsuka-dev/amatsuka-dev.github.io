@@ -28,15 +28,20 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-/* El fondo va solo en html (detrás de todo). Si el body tuviera fondo, taparía el video de la cámara */
-html{background:#2a1408}
+html{background:#fff}
 body{background:transparent}
 
-/* Contenedor de la escena AR (a pantalla completa) */
-#ar{position:absolute;inset:0;overflow:hidden;z-index:0}   /* z-index:0 crea su propio nivel: el video (z-index negativo) queda dentro y visible */
-#ar video{position:absolute!important;z-index:0!important;display:block!important;visibility:visible!important;opacity:1!important}
-#ar a-scene{position:absolute!important;inset:0;z-index:1!important;background:transparent!important}
-#ar canvas{background:transparent!important}
+/* ---------- Contenedor de la escena AR (pantalla completa) ----------
+   z-index:0 crea su propio nivel de apilamiento: el <video> de la cámara
+   y el canvas de A-Frame quedan DENTRO y por debajo de toda la interfaz. */
+#ar{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;z-index:0;background:transparent}
+#ar video{position:absolute!important;z-index:0!important;display:block!important;visibility:visible!important;opacity:1!important;
+  background:transparent!important;max-width:none!important}
+/* A-Frame (modo embedded): la escena llena el contenedor, sin fondo, encima del video */
+#ar a-scene{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;
+  z-index:1!important;background:transparent!important}
+#ar a-scene .a-canvas,#ar canvas{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;
+  background:transparent!important;z-index:1!important}
 
 /* ---------- Botones fijos ---------- */
 .ar-volver{position:fixed;top:14px;left:14px;z-index:50;display:inline-flex;align-items:center;gap:6px;
@@ -52,7 +57,7 @@ body{background:transparent}
 
 /* ---------- Pantalla de inicio / carga / error ---------- */
 .ar-pantalla{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
-  padding:24px;text-align:center;background:linear-gradient(160deg,#fde2a8,#f8b04a)}
+  padding:24px;text-align:center;background:#fff}
 .ar-pantalla[hidden]{display:none}
 .ar-pantalla img.logo{width:110px;height:auto;display:block;animation:flota 3.4s ease-in-out infinite}
 .ar-titulo{margin:0;font-family:var(--titulo);font-weight:400;font-size:clamp(2.6rem,9vw,4.4rem);color:var(--marron);line-height:1}
@@ -109,12 +114,13 @@ body{background:transparent}
 
 /* ---------- Modo prueba (?demo=1) ---------- */
 .ar-demo{position:fixed;top:108px;left:50%;transform:translateX(-50%);z-index:45;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:calc(100vw - 24px)}
+.ar-demo[hidden]{display:none}
 .ar-demo button{font-family:var(--cuerpo);font-size:.85rem;padding:6px 12px;border-radius:999px;border:2px solid var(--rosa-carta);background:var(--crema);color:var(--marron);cursor:pointer}
 .ar-demo button:hover{background:var(--rosa-carta);color:#fff}
-body.demo{background:linear-gradient(160deg,#fde2a8,#f8b04a)}
+body.demo{background:#fff}
 
 /* ---------- Galería de cartas digitales ---------- */
-.gal{position:fixed;inset:0;z-index:70;background:linear-gradient(160deg,#fde2a8,#f8b04a);display:flex;flex-direction:column;overflow:hidden}
+.gal{position:fixed;inset:0;z-index:70;background:#fff;display:flex;flex-direction:column;overflow:hidden}
 .gal[hidden]{display:none}
 .gal-top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px}
 .gal-top h2{margin:0;font-family:var(--titulo);font-weight:400;font-size:2rem;color:var(--marron);line-height:1}
@@ -146,9 +152,10 @@ body.demo{background:linear-gradient(160deg,#fde2a8,#f8b04a)}
   <button class="sh-ibtn" id="shCartBtn" aria-label="Carrito"><img src="carrito.svg" alt="carrito"><span class="sh-badge">0</span></button>
 </div>
 
-<!-- Escena AR: las anclas se crean desde la lista CARTAS (abajo) -->
+<!-- Escena AR: las anclas se crean desde la lista CARTAS (abajo).
+     OJO: lleva el atributo "embedded" para que A-Frame NO se ponga a pantalla completa encima del video. -->
 <div id="ar">
-  <a-scene id="escenaAr" background="transparent: true"
+  <a-scene id="escenaAr" embedded background="transparent: true"
     mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 0.001;"
     color-space="sRGB"
     renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true"
@@ -421,15 +428,21 @@ function falloCamara(e){
   else error("No pudimos iniciar la cámara ni leer las cartas. Revisa que targets.mind tenga las 18 imágenes (00 a 17) y se haya compilado con MindAR 1.2.x.");
 }
 
+/* Asegura que el video de la cámara se vea: lo reacomoda y lo reproduce */
+function mostrarVideo(){
+  const v = document.querySelector("#ar video");
+  if(!v){ avisar("No se encontró el video de la cámara"); console.warn("Sin <video> en #ar"); return; }
+  v.setAttribute("playsinline", ""); v.setAttribute("muted", ""); v.muted = true;
+  if(v.paused) v.play().catch(()=>{});
+  window.dispatchEvent(new Event("resize"));      // MindAR recalcula tamaño/posición del video
+  console.log("Video cámara:", v.videoWidth + "x" + v.videoHeight, "pausado:", v.paused);
+  if(!v.videoWidth) avisar("La cámara no está enviando imagen");
+}
+
 escena.addEventListener("arReady", () => {
   pantalla(null); $("guia").classList.add("on");
-  setTimeout(() => {
-    const v = document.querySelector("#ar video");
-    if(!v){ avisar("No se encontró el video de la cámara"); console.warn("Sin <video> en #ar"); return; }
-    console.log("Video cámara:", v.videoWidth + "x" + v.videoHeight, "pausado:", v.paused);
-    if(v.paused) v.play().catch(()=>{});
-    if(!v.videoWidth) avisar("La cámara no está enviando imagen");
-  }, 800);
+  mostrarVideo();
+  setTimeout(mostrarVideo, 600);
 });
 escena.addEventListener("arError", e => falloCamara(e && e.detail ? e.detail : e));
 
