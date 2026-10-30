@@ -194,7 +194,7 @@ body.rem #remote{display:flex}
 #remote{padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))}
 /* ===== GitHub ===== */
 .ov{position:fixed;inset:0;background:#0008;z-index:230;display:none;align-items:center;justify-content:center}
-.ov.on{display:flex}#ghplay{z-index:245}
+.ov.on{display:flex}#ghplay,#gh{z-index:245}
 .gb{background:#fff;border-radius:18px;padding:18px;width:min(460px,94vw);max-height:92vh;overflow:auto;position:relative;text-align:center}
 .gb h3{margin:0;color:var(--p)}.gb .x{position:absolute;right:10px;top:6px;background:none;border:0;font-size:22px;color:var(--p)}
 .gg{display:grid;gap:6px;margin:10px 0}.gg input{border:1.5px solid var(--pl);border-radius:8px;padding:8px;font-family:inherit;font-size:14px}
@@ -678,11 +678,13 @@ async function ghLoad(c,root){
     drawList();refreshStage();drawProps();busyMsg('');return true;
   }catch(e){busyMsg('');gsay('❌ '+e.message);toast('No se pudo abrir: '+e.message);return false}
 }
-async function ghLs(){
+async function ghLs(auto){
+  {const u0=$('#gU').value.trim(),r0=$('#gR').value.trim();
+   if(u0&&r0&&!$('#gB').value.trim()){try{const q=await fetch(`https://api.github.com/repos/${u0}/${r0}`);if(q.ok)$('#gB').value=(await q.json()).default_branch}catch(_){}}}
   const c=gc();if(!c.u||!c.r){gsay('Falta usuario o repositorio');return}
   gsay('Buscando…');const L=$('#gL');L.innerHTML='';
   try{const r=await fetch(gApi(c,c.d)+'?ref='+encodeURIComponent(c.b),{headers:gH(c)});if(!r.ok)throw new Error('carpeta '+c.d+' ('+r.status+')');
-    const ds=(await r.json()).filter(x=>x.type==='dir');gsay(ds.length?'Toca una para abrirla:':'No hay presentaciones en '+c.d);
+    const ds=(await r.json()).filter(x=>x.type==='dir');gsay(ds.length?'Toca una para abrirla:':'No hay presentaciones en '+c.d);if(auto&&ds.length)$('#gh').classList.add('on');
     ds.forEach(d=>{const b=document.createElement('button');b.textContent='📁 '+d.name;
       b.onclick=async()=>{if(await ghLoad(c,c.d+'/'+d.name)){$('#gh').classList.remove('on');toast('Presentación abierta')}};L.appendChild(b)});
   }catch(e){gsay('❌ '+e.message)}
@@ -692,8 +694,13 @@ async function bootGh(spec){
   if(!$('#gU').value)$('#gU').value=c.u;if(!$('#gR').value)$('#gR').value=c.r;if(!$('#gB').value)$('#gB').value=c.b;
   if(await ghLoad(c,p.slice(3).join('/'))){$('#gpT').textContent='🍰 '+$('#gN').value;$('#ghplay').classList.add('on')}
 }
+function autoGh(){
+  const m=location.hostname.match(/^([^.]+)\.github\.io$/),seg=location.pathname.split('/')[1]||'';
+  if(m){if(!$('#gU').value)$('#gU').value=m[1];if(!$('#gR').value)$('#gR').value=seg&&!/\.html?$/.test(seg)?seg:m[1]+'.github.io'}
+  if($('#gU').value.trim()&&$('#gR').value.trim())ghLs(true);
+}
 $('#bGh').onclick=()=>$('#gh').classList.add('on');$('#ghX').onclick=()=>$('#gh').classList.remove('on');
-$('#gUp').onclick=ghUp;$('#gLs').onclick=ghLs;
+$('#gUp').onclick=ghUp;$('#gLs').onclick=()=>ghLs();
 $('#gLink').onclick=async()=>{const c=gc(),nm=slug($('#gN').value);if(!c.u||!c.r||!nm){gsay('Falta usuario, repositorio o nombre');return}
   const l=location.href.split(/[?#]/)[0]+`?gh=${c.u}/${c.r}/${c.b}/${c.d}/${nm}`;
   try{await navigator.clipboard.writeText(l);toast('Enlace copiado')}catch(_){prompt('Copia el enlace:',l)}};
@@ -1177,7 +1184,7 @@ function initEditor(){
   new ResizeObserver(fitStage).observe(c);
   $('#pToggle').onclick=()=>$('#app').classList.toggle('po');
   const gq=new URLSearchParams(location.search).get('gh');
-  restoreLocal().then(ok=>{if(ok&&!gq){drawList();refreshStage();drawProps();toast('Se restauró tu última presentación')}ready=!gq;if(gq)bootGh(gq)});
+  restoreLocal().then(ok=>{if(ok&&!gq){drawList();refreshStage();drawProps();toast('Se restauró tu última presentación')}ready=!gq;if(gq)bootGh(gq);else autoGh()});
   if(matchMedia('(pointer:coarse) and (max-width:1000px)').matches)$('#home').classList.add('on');
   addEventListener('beforeunload',e=>{if(slides.length>1||slides[0].els.length>2){e.preventDefault();e.returnValue=''}});
 }
