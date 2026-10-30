@@ -1,0 +1,24 @@
+CARPETA BASE: presentaciones
+En el editor (botón GitHub) escribe como "Carpeta base": presentaciones
+
+Cada presentación es una carpeta con este formato:
+
+presentaciones/
+  <nombre>/
+    pdf/                          -> los PDF originales
+    transiciones/transiciones.json -> transiciones, guion y elementos
+    media/                        -> imágenes y videos
+
+Ruta de ejemplo en GitHub:
+  presentaciones/ejemplo/pdf/
+  presentaciones/ejemplo/transiciones/transiciones.json
+  presentaciones/ejemplo/media/
+
+Enlace para abrir una presentación (sube presentador.html a tu hosting):
+  https://TU-SITIO/presentador.html?gh=USUARIO/REPO/main/presentaciones/ejemplo
+
+Pasos:
+1. Sube esta carpeta (presentador.html + presentaciones/) a tu repositorio.
+2. Abre presentador.html, botón ☁ GitHub, llena usuario, repo, rama y token.
+3. Usa "Subir" para guardar una presentación nueva aquí, o "Mis presentaciones" para abrirla.
+La carpeta "ejemplo" es solo de prueba; puedes borrarla.
