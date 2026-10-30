@@ -68,7 +68,7 @@ body.rem #app,body.rem #pres,body.rem #modal{display:none!important}
 #pres.mv{cursor:default}
 #pbox{position:absolute;left:50%;top:50%;width:1280px;height:720px;overflow:hidden;transform-origin:0 0}
 #pstage{position:absolute;left:0;top:0;width:1280px;height:720px;perspective:1800px;transform-origin:0 0;transition:transform .45s cubic-bezier(.4,0,.2,1)}
-#laser{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:radial-gradient(#ff2d2d 30%,#ff2d2d66 70%,transparent);box-shadow:0 0 18px 6px #ff2d2d88;display:none;pointer-events:none;z-index:5}
+.laser{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:var(--c,#ff2d2d);box-shadow:0 0 18px 6px var(--c,#ff2d2d);opacity:.92;display:none;pointer-events:none;z-index:5}
 #black{position:absolute;inset:0;background:#000;display:none;z-index:6}
 #pbar{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:#000a;border-radius:999px;padding:6px 10px;display:flex;gap:6px;align-items:center;z-index:7;opacity:0;transition:opacity .3s;color:#fff;font-size:13px}
 #pres.mv #pbar{opacity:1}
@@ -128,7 +128,8 @@ body.rem #remote{display:flex}
 #rPad{width:calc(100% + 28px);margin:0 -14px;border-radius:0;border:3px solid var(--p);border-left:0;border-right:0}
 #rPad img,#rPad2 img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:fill;transform-origin:0 0;pointer-events:none;display:none;-webkit-user-drag:none}
 #rPad .ph{position:absolute;left:0;right:0;bottom:8px;text-align:center;color:#fff;font-size:13px;font-weight:600;text-shadow:0 1px 4px #000;pointer-events:none}
-.pdot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:radial-gradient(#ff2d2d 30%,#ff2d2d66 70%,transparent);box-shadow:0 0 14px 5px #ff2d2d88;display:none;pointer-events:none}
+.pdot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:var(--c,#ff2d2d);box-shadow:0 0 14px 5px var(--c,#ff2d2d);display:none;pointer-events:none}
+#rCol{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--p)}#rCol input{width:44px;height:34px;border:0;padding:0;background:none}#rSw{display:flex;gap:6px}#rSw button{width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--p);padding:0}
 #rPadBig{margin-top:8px;width:100%;border:2px solid var(--p);background:#fff;color:var(--p);border-radius:12px;padding:11px;font-weight:700;font-size:15px}
 #rBig{position:fixed;inset:0;background:#000;z-index:50;display:none;align-items:center;justify-content:center;touch-action:none}
 #rBig.on{display:flex}
@@ -232,8 +233,7 @@ body.rem #remote{display:flex}
 
 <div id="pres">
   <div id="pbox"><div id="pstage"></div></div>
-  <div id="laser"></div>
-  <div id="black"></div>
+    <div id="black"></div>
   <div id="pbar"><button id="pPrev">◀</button><span id="pCnt"></span><button id="pNext">▶</button><button id="pFs" title="Pantalla completa">⛶</button><button id="pExit">✕</button></div>
 </div>
 
@@ -260,6 +260,7 @@ body.rem #remote{display:flex}
   <div id="rBtns"><button id="rPrev">◀</button><button id="rNext">▶</button></div>
   <div id="rGuion"><div class="gh"><b>📝 Guion</b><span><button id="gMinus">A−</button><button id="gPlus">A+</button></span></div><div id="rNotes"></div><div id="rNext2"></div></div>
   <div id="rRow"><button id="rStart">▶ Iniciar</button><button id="rBlack">⬛ Negro</button><button id="rStop">✕ Salir</button></div>
+  <div id="rCol"><span>🎨 Mi puntero</span><input type="color" id="rColor"><span id="rSw"></span></div>
   <div id="rPad"><img id="pImg" alt=""><span class="ph">🔴 Puntero láser: toca y arrastra aquí</span><i class="pdot"></i></div>
   <button id="rPadBig">⛶ Puntero en pantalla completa</button>
   <div id="rBig"><div id="rPad2"><img id="pImg2" alt=""><i class="pdot"></i></div><button id="rBigClose">✕ Cerrar</button><div class="rbHint">Puntero en pantalla completa (se gira solo en vertical)</div></div>
@@ -782,7 +783,13 @@ pres.addEventListener('click',ev=>{
 $('#pPrev').onclick=()=>step(-1);$('#pNext').onclick=()=>step(1);$('#pFs').onclick=toggleFs;$('#pExit').onclick=endPresent;
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&fsStart&&presenting)endPresent();fitP()});
 addEventListener('resize',()=>{fitStage();if(presenting)fitP()});
-function laser(x,y,on){const l=$('#laser');if(!on){l.style.display='none';return}l.style.display='block';
+const lasers=new Map();
+function laser(x,y,on,id='_',color){
+  let l=lasers.get(id);
+  if(!l){if(!on)return;l=document.createElement('div');l.className='laser';pres.appendChild(l);lasers.set(id,l)}
+  if(!on){l.style.display='none';return}
+  if(color&&/^#[0-9a-f]{6}$/i.test(color))l.style.setProperty('--c',color);
+  l.style.display='block';
   const s=Math.min(innerWidth/W,innerHeight/H);l.style.left=(innerWidth/2-W*s/2+x*W*s)+'px';l.style.top=(innerHeight/2-H*s/2+y*H*s)+'px'}
 
 /* ---------- Zoom en la presentación ---------- */
@@ -902,7 +909,7 @@ function onRemote(m,c){
     case'start':if(!presenting){startPresent(Number.isInteger(m.i)&&slides[m.i]?m.i:cur);toast('Presentando — pulsa ⛶ para pantalla completa')}break;
     case'stop':endPresent();break;
     case'black':if(presenting)toggleBlack();break;
-    case'ptr':if(presenting)laser(m.x,m.y,m.on);break;
+    case'ptr':if(presenting)laser(m.x,m.y,m.on,c.peer,m.c);break;
     case'zoom':if(presenting){applyZoom(m);sendZoom(c)}break;
   }
 }
@@ -918,7 +925,7 @@ function startPeer(){
     conns.push(c);
     c.on('open',()=>{updCount();sendState();syncThumbs(c)});
     c.on('data',m=>onRemote(m,c));
-    c.on('close',()=>{conns=conns.filter(x=>x!==c);updCount();laser(0,0,false);sendState()});
+    c.on('close',()=>{conns=conns.filter(x=>x!==c);updCount();{const l=lasers.get(c.peer);if(l){l.remove();lasers.delete(c.peer)}}sendState()});
     c.on('error',()=>{});
   });
 }
@@ -1055,10 +1062,15 @@ function initRemote(id){
   $('#rBlack').onclick=()=>{vib();send({t:'black'})};
   $('#rStop').onclick=()=>{if(confirm('¿Salir de la presentación?'))send({t:'stop'})};
   $('#rList').onclick=e=>{const d=e.target.closest('[data-i]');if(d){vib();send(window._rOn?{t:'goto',i:+d.dataset.i}:{t:'start',i:+d.dataset.i})}};
+  const PAL=['#ff2d2d','#2d7bff','#22c55e','#f59e0b','#a855f7','#ec4899','#ffffff'];
+  let col=LS.get('shp_col')||PAL[Math.floor(Math.random()*6)];
+  const setCol=c=>{col=c;LS.set('shp_col',c);document.documentElement.style.setProperty('--c',c);$('#rColor').value=c};
+  setCol(col);$('#rColor').oninput=e=>setCol(e.target.value);
+  PAL.forEach(c=>{const b=document.createElement('button');b.style.background=c;b.onclick=()=>{vib();setCol(c)};$('#rSw').appendChild(b)});
   function bindPad(el){
     const dot=el.querySelector('.pdot');
     const mv=e=>{const r=el.getBoundingClientRect(),rot=el.id==='rPad2'&&matchMedia('(orientation:portrait)').matches,cl=v=>Math.max(0,Math.min(1,v)),x=cl(rot?(e.clientY-r.top)/r.height:(e.clientX-r.left)/r.width),y=cl(rot?(r.right-e.clientX)/r.width:(e.clientY-r.top)/r.height);
-      send({t:'ptr',on:true,x,y});dot.style.display='block';dot.style.left=(x*100)+'%';dot.style.top=(y*100)+'%'};
+      send({t:'ptr',on:true,x,y,c:col});dot.style.display='block';dot.style.left=(x*100)+'%';dot.style.top=(y*100)+'%'};
     const off=()=>{send({t:'ptr',on:false,x:0,y:0});dot.style.display='none'};
     el.addEventListener('pointerdown',e=>{el.setPointerCapture(e.pointerId);mv(e)});
     el.addEventListener('pointermove',e=>{if(e.buttons||e.pressure)mv(e)});
