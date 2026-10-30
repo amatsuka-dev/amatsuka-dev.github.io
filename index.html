@@ -1,523 +1,791 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ArSweetCards | Sweet Help</title>
-<link rel="icon" href="favicon.ico">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Lilita+One&display=swap" rel="stylesheet">
-
-<!-- AR: A-Frame + MindAR (reconocimiento de imágenes) -->
-<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#bd5c73">
+<title>Presentador</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Pacifico&family=Bebas+Neue&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <style>
-@font-face{
-  font-family:"Choco Taste Trial";
-  src:url("Choco Taste Trial.otf") format("opentype"),
-      url("Choco%20Taste%20Trial.otf") format("opentype");
-  font-display:swap;
-}
-:root{
-  --rosa:#ff9a9a; --rosa-carta:#f28f95; --crema:#f8f2dc; --marron:#8b5e3c;
-  --oscuro:#2a1408; --antojo:#8a3f55; --flecha:#bc5d75; --agregar:#e0527a;
-  --titulo:"Choco Taste Trial","Lobster","Brush Script MT",cursive;
-  --cuerpo:"Lilita One",system-ui,sans-serif;
-}
+:root{--p:#bd5c73;--pl:#ffe0e1;--bg:#fff7f7;--tx:#3b2a30}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-html{background:#fff}
-body{background:transparent}
-
-/* ---------- Contenedor de la escena AR (pantalla completa) ----------
-   z-index:0 crea su propio nivel de apilamiento: el <video> de la cámara
-   y el canvas de A-Frame quedan DENTRO y por debajo de toda la interfaz. */
-#ar{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;z-index:0;background:transparent}
-#ar video{position:absolute!important;z-index:0!important;display:block!important;visibility:visible!important;opacity:1!important;
-  background:transparent!important;max-width:none!important}
-/* A-Frame (modo embedded): la escena llena el contenedor, sin fondo, encima del video */
-#ar a-scene{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;
-  z-index:1!important;background:transparent!important}
-#ar a-scene .a-canvas,#ar canvas{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;
-  background:transparent!important;z-index:1!important}
-
-/* ---------- Botones fijos ---------- */
-.ar-volver{position:fixed;top:14px;left:14px;z-index:50;display:inline-flex;align-items:center;gap:6px;
-  font-family:var(--cuerpo);font-size:1rem;color:#fff;text-decoration:none;
-  background:rgba(42,20,8,.55);backdrop-filter:blur(6px);padding:9px 16px;border-radius:999px}
-.ar-volver:hover{background:rgba(42,20,8,.75)}
-.ar-cartasbtn{position:fixed;top:62px;left:14px;z-index:50;font-family:var(--cuerpo);font-size:.95rem;color:#fff;border:0;cursor:pointer;
-  background:rgba(224,82,122,.9);padding:8px 16px;border-radius:999px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
-.ar-cartasbtn:hover{background:var(--agregar)}
-.sh-cart-wrap{position:fixed;top:10px;right:14px;z-index:50}
-.sh-ibtn{position:relative;background:none;border:0;padding:0;cursor:pointer;line-height:0}
-.sh-ibtn img{width:56px;height:56px}
-
-/* ---------- Pantalla de inicio / carga / error ---------- */
-.ar-pantalla{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
-  padding:24px;text-align:center;background:#fff}
-.ar-pantalla[hidden]{display:none}
-.ar-pantalla img.logo{width:110px;height:auto;display:block;animation:flota 3.4s ease-in-out infinite}
-.ar-titulo{margin:0;font-family:var(--titulo);font-weight:400;font-size:clamp(2.6rem,9vw,4.4rem);color:var(--marron);line-height:1}
-.ar-sub{margin:0;max-width:340px;font-family:var(--cuerpo);font-size:1.05rem;color:var(--antojo);line-height:1.3}
-.ar-btn{font-family:var(--cuerpo);font-size:1.3rem;color:#fff;background:var(--agregar);border:0;border-radius:999px;padding:12px 34px;cursor:pointer;
-  box-shadow:0 6px 16px rgba(0,0,0,.25);transition:transform .25s cubic-bezier(.3,1.8,.5,1)}
-.ar-btn:hover{transform:scale(1.07,.95)}
-.ar-btn:active{transform:scale(.9,1.1)}
-.ar-btn.sec{background:#fff;color:var(--agregar);font-size:1.05rem;padding:9px 24px;border:3px solid var(--agregar)}
-.ar-nota{margin:0;max-width:320px;font-size:.8rem;color:var(--marron);opacity:.85}
-.ar-pantalla.oscura{background:rgba(42,20,8,.82);backdrop-filter:blur(4px)}
-.ar-pantalla.oscura .ar-titulo{color:#fff}
-.ar-pantalla.oscura .ar-sub{color:#ffe0e1}
-.rueda{width:54px;height:54px;border-radius:50%;border:6px solid rgba(255,255,255,.35);border-top-color:#fff;animation:gira .8s linear infinite}
-@keyframes gira{to{transform:rotate(360deg)}}
-@keyframes flota{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-12px) rotate(2deg)}}
-
-/* ---------- Guía de escaneo ---------- */
-.ar-guia{position:fixed;left:0;right:0;top:50%;z-index:20;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:14px;pointer-events:none;
-  opacity:0;transition:opacity .35s}
-.ar-guia.on{opacity:1}
-.ar-marco{width:min(62vw,260px);aspect-ratio:3/4;position:relative}
-.ar-marco i{position:absolute;width:34px;height:34px;border:5px solid #fff;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));animation:late 1.6s ease-in-out infinite}
-.ar-marco i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0;border-radius:14px 0 0 0}
-.ar-marco i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0;border-radius:0 14px 0 0}
-.ar-marco i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0;border-radius:0 0 0 14px}
-.ar-marco i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0;border-radius:0 0 14px 0}
-@keyframes late{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
-.ar-guia span{font-family:var(--cuerpo);font-size:1rem;color:#fff;background:rgba(42,20,8,.6);padding:7px 16px;border-radius:999px}
-
-/* ---------- Panel de la carta reconocida ---------- */
-.ar-panel{position:fixed;left:50%;bottom:16px;z-index:30;width:min(440px,calc(100vw - 24px));transform:translate(-50%,130%);transition:transform .45s cubic-bezier(.3,1.4,.5,1);
-  background:var(--crema);border:6px solid var(--rosa-carta);border-radius:30px;padding:14px 16px 16px;box-shadow:0 12px 34px rgba(0,0,0,.4)}
-.ar-panel.on{transform:translate(-50%,0)}
-.ar-fila{display:flex;gap:14px;align-items:center}
-.ar-miniatura{width:84px;flex:none;height:auto;display:block;border-radius:14px}
-.ar-datos{flex:1;min-width:0}
-.ar-nombre{margin:0;font-family:var(--titulo);font-weight:400;font-size:2rem;line-height:1;color:var(--marron)}
-.ar-precio{font-family:var(--cuerpo);font-size:1.25rem;color:var(--flecha);margin-top:2px}
-.ar-ing{margin:8px 0 0;font-size:.74rem;line-height:1.3;color:var(--oscuro)}
-.ar-ing b{color:var(--antojo)}
-.ar-mas{flex:none;width:54px;height:54px;border-radius:50%;border:3px solid var(--agregar);background:var(--agregar);color:#fff;display:flex;align-items:center;justify-content:center;
-  font-family:var(--cuerpo);font-size:2.2rem;line-height:1;text-decoration:none;cursor:pointer;transition:transform .25s cubic-bezier(.3,1.8,.5,1),background .15s,color .15s}
-.ar-mas:hover{background:#fff;color:var(--agregar);transform:scale(1.12)}
-.ar-mas:active{transform:scale(.85)}
-.ar-kit{margin:10px 0 0;text-align:center;font-family:var(--cuerpo);font-size:.8rem;color:var(--antojo)}
-.ar-kit img{height:1.6em;width:auto;vertical-align:middle;margin-left:2px}
-
-/* ---------- Aviso ---------- */
-.ar-toast{position:fixed;left:50%;top:78px;z-index:80;transform:translate(-50%,-20px);opacity:0;pointer-events:none;
-  background:var(--agregar);color:#fff;font-family:var(--cuerpo);font-size:1rem;padding:9px 20px;border-radius:999px;box-shadow:0 6px 18px rgba(0,0,0,.35);
-  transition:transform .3s cubic-bezier(.3,1.6,.5,1),opacity .25s;max-width:calc(100vw - 32px);text-align:center}
-.ar-toast.show{opacity:1;transform:translate(-50%,0)}
-
-/* ---------- Modo prueba (?demo=1) ---------- */
-.ar-demo{position:fixed;top:108px;left:50%;transform:translateX(-50%);z-index:45;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:calc(100vw - 24px)}
-.ar-demo[hidden]{display:none}
-.ar-demo button{font-family:var(--cuerpo);font-size:.85rem;padding:6px 12px;border-radius:999px;border:2px solid var(--rosa-carta);background:var(--crema);color:var(--marron);cursor:pointer}
-.ar-demo button:hover{background:var(--rosa-carta);color:#fff}
-body.demo{background:#fff}
-
-/* ---------- Galería de cartas digitales ---------- */
-.gal{position:fixed;inset:0;z-index:70;background:#fff;display:flex;flex-direction:column;overflow:hidden}
-.gal[hidden]{display:none}
-.gal-top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px}
-.gal-top h2{margin:0;font-family:var(--titulo);font-weight:400;font-size:2rem;color:var(--marron);line-height:1}
-.gal-x{font-family:var(--cuerpo);font-size:1rem;color:#fff;background:var(--agregar);border:0;border-radius:999px;padding:8px 18px;cursor:pointer}
-.gal-tip{margin:0;padding:0 16px 8px;font-family:var(--cuerpo);font-size:.9rem;color:var(--antojo)}
-.gal-grid{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;padding:6px 16px 24px;align-content:start}
-.gal-item{background:#fff;border:0;border-radius:14px;padding:6px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.18);transition:transform .2s}
-.gal-item:hover{transform:scale(1.04)}
-.gal-item img{width:100%;height:auto;display:block;border-radius:10px}
-.gal-item span{display:block;margin-top:4px;font-family:var(--cuerpo);font-size:.78rem;color:var(--marron)}
-/* Visor: carta grande sobre fondo blanco, pensada para apuntarle otra cámara */
-.vis{position:fixed;inset:0;z-index:75;background:#fff;display:flex;align-items:center;justify-content:center}
-.vis[hidden]{display:none}
-.vis img{max-width:min(92vw,calc(92vh * .75));max-height:88vh;width:auto;height:auto;display:block;border-radius:12px}
-.vis-x,.vis-n,.vis-p{position:absolute;border:0;cursor:pointer;font-family:var(--cuerpo);color:#fff;background:rgba(224,82,122,.92);border-radius:999px}
-.vis-x{top:12px;right:12px;font-size:1rem;padding:8px 18px}
-.vis-n,.vis-p{top:50%;transform:translateY(-50%);width:48px;height:48px;font-size:1.8rem;line-height:1}
-.vis-p{left:8px}.vis-n{right:8px}
-.vis-nom{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-family:var(--cuerpo);font-size:.85rem;color:var(--marron);opacity:.7;pointer-events:none}
-
-@media (prefers-reduced-motion: reduce){.ar-pantalla img.logo,.ar-marco i{animation:none}}
+html,body{margin:0;height:100%;font-family:Poppins,system-ui,sans-serif;color:var(--tx);background:var(--bg)}
+button{font-family:inherit;cursor:pointer}
+/* ===== Editor ===== */
+#app{display:grid;height:100vh;height:100dvh;grid-template-rows:56px 1fr;grid-template-columns:190px 1fr 290px;grid-template-areas:"top top top" "list center props"}
+body.rem #app,body.rem #pres,body.rem #modal{display:none!important}
+#top{grid-area:top;background:var(--p);color:#fff;display:flex;align-items:center;gap:6px;padding:0 12px;overflow-x:auto}
+#top b{font-size:17px;margin-right:10px;white-space:nowrap}
+#top button{background:#ffffff26;border:0;color:#fff;border-radius:10px;padding:8px 11px;font-size:13px;white-space:nowrap;font-weight:600}
+#top button:hover{background:#ffffff45}
+#top .sp{flex:1}
+#top .go{background:#fff;color:var(--p)}
+#top .go:hover{background:var(--pl)}
+#list{grid-area:list;background:#fff;border-right:2px solid var(--pl);overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.th{position:relative;width:160px;height:90px;flex:none;border:3px solid var(--pl);border-radius:8px;overflow:hidden;cursor:pointer;background:#fff}
+.th.on{border-color:var(--p)}
+.th.over{outline:3px dashed var(--p)}
+.th b{position:absolute;left:0;top:0;background:var(--p);color:#fff;font-size:11px;padding:1px 6px;border-bottom-right-radius:8px;z-index:3}
+.thin{width:1280px;height:720px;transform:scale(.125);transform-origin:0 0;pointer-events:none}
+#addSlide{border:2px dashed var(--p);background:none;color:var(--p);border-radius:10px;padding:8px;font-weight:600;flex:none}
+#center{grid-area:center;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f0dcdd;position:relative}
+#stageBox{position:relative;box-shadow:0 8px 30px #0003}
+#stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;background:#fff}
+#props{grid-area:props;background:#fff;border-left:2px solid var(--pl);overflow-y:auto;padding:12px;font-size:13px}
+#props h4{margin:12px 0 6px;color:var(--p);font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+#props h4:first-child{margin-top:0}
+.f{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:5px 0}
+.f span{flex:none}
+.f input:not([type=checkbox]):not([type=color]),.f select{width:140px;border:1.5px solid var(--pl);border-radius:8px;padding:5px 7px;font-family:inherit;font-size:13px}
+.f input[type=color]{width:60px;height:30px;border:0;padding:0;background:none}
+.f input[type=range]{padding:0}
+.chk{display:flex;gap:6px;align-items:center;margin:5px 0}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.row button,#props textarea+button{border:1.5px solid var(--p);background:#fff;color:var(--p);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600}
+.row button:hover{background:var(--pl)}
+.row .dg{background:var(--p);color:#fff}
+#props textarea{width:100%;height:90px;border:1.5px solid var(--pl);border-radius:8px;padding:7px;font-family:inherit;font-size:13px;resize:vertical}
+.hint{color:#9b7e86;font-size:12px;margin-top:10px;line-height:1.4}
+/* elementos */
+.slide{position:absolute;left:0;top:0;width:1280px;height:720px;overflow:hidden}
+.el{position:absolute}
+.el>.in{width:100%;height:100%}
+.txt{width:100%;height:100%;white-space:pre-wrap;line-height:1.2;padding:6px;overflow-wrap:anywhere;outline:none}
+.el img,.el video,.el iframe{width:100%;height:100%;display:block;border:0}
+.ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#222;color:#fff;font-size:42px;border-radius:12px}
+.edit .el{cursor:move;touch-action:none}
+.edit .el>.in{pointer-events:none}
+.edit .el.editing>.in{pointer-events:auto;cursor:text}
+.edit .el.sel{outline:calc(3px*var(--inv,1)) solid var(--p)}
+.hnd{position:absolute;right:calc(-20px*var(--inv,1));bottom:calc(-20px*var(--inv,1));width:calc(40px*var(--inv,1));height:calc(40px*var(--inv,1));border-radius:50%;background:var(--p);border:calc(3px*var(--inv,1)) solid #fff;cursor:nwse-resize;touch-action:none}
+/* ===== Presentación ===== */
+#pres{position:fixed;inset:0;background:#000;z-index:100;display:none;overflow:hidden;cursor:none}
+#pres.on{display:block}
+#pres.mv{cursor:default}
+#pstage{position:absolute;left:50%;top:50%;width:1280px;height:720px;overflow:hidden;perspective:1800px;transform-origin:0 0}
+#laser{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:radial-gradient(#ff2d2d 30%,#ff2d2d66 70%,transparent);box-shadow:0 0 18px 6px #ff2d2d88;display:none;pointer-events:none;z-index:5}
+#black{position:absolute;inset:0;background:#000;display:none;z-index:6}
+#pbar{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:#000a;border-radius:999px;padding:6px 10px;display:flex;gap:6px;align-items:center;z-index:7;opacity:0;transition:opacity .3s;color:#fff;font-size:13px}
+#pres.mv #pbar{opacity:1}
+#pbar button{background:#ffffff22;border:0;color:#fff;border-radius:999px;padding:7px 12px;font-size:14px}
+#pbar button:hover{background:#ffffff55}
+/* ===== Modal ===== */
+#modal{position:fixed;inset:0;background:#0008;z-index:200;display:none;align-items:center;justify-content:center}
+#modal.on{display:flex}
+#mbox{background:#fff;border-radius:20px;padding:22px;width:min(420px,92vw);text-align:center;position:relative}
+#mbox h3{margin:0 0 6px;color:var(--p)}
+#qr{display:inline-block;padding:12px;background:#fff;border:3px solid var(--pl);border-radius:14px;margin:10px 0;min-height:60px}
+#mbox input{width:100%;border:1.5px solid var(--pl);border-radius:10px;padding:8px;font-family:inherit;font-size:12px}
+#mbox .x{position:absolute;right:10px;top:8px;background:none;border:0;font-size:22px;color:var(--p)}
+#mcount{font-weight:600;margin:6px 0}
+#mwarn{background:var(--pl);border-radius:10px;padding:8px;font-size:12px;margin:8px 0;display:none;text-align:left}
+#toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:var(--p);color:#fff;padding:10px 18px;border-radius:999px;z-index:400;display:none;font-size:14px}
+#busy{position:fixed;inset:0;background:#fffc;z-index:300;display:none;align-items:center;justify-content:center;font-size:20px;color:var(--p);font-weight:600}
+/* ===== Escáner QR ===== */
+#scan{position:fixed;inset:0;background:#000;z-index:250;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;padding:16px}
+#scan.on{display:flex}
+#scan .box{position:relative;width:min(88vw,420px);aspect-ratio:1;border-radius:20px;overflow:hidden;background:#222}
+#scan video{width:100%;height:100%;object-fit:cover}
+#scan .box::after{content:'';position:absolute;inset:14%;border:4px solid var(--p);border-radius:16px;box-shadow:0 0 0 999px #0005}
+#scanMsg{font-size:15px;text-align:center;max-width:420px}
+#scan button{background:#fff;color:var(--p);border:0;border-radius:12px;padding:10px 22px;font-weight:700;font-size:15px}
+#scan .alt{font-size:12px;opacity:.85;display:flex;gap:6px;width:min(88vw,420px)}
+#scan .alt input{flex:1;border:0;border-radius:8px;padding:8px;font-family:inherit;font-size:12px}
+#rUnlink{background:none;border:1.5px solid var(--p);color:var(--p);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600}
+/* ===== Control remoto (celular) ===== */
+#remote{display:none;min-height:100vh;padding:14px;flex-direction:column;gap:12px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+body.rem #remote{display:flex}
+#rTop{display:flex;align-items:center;gap:8px;font-weight:600}
+#rDot{width:12px;height:12px;border-radius:50%;background:#e33}
+#rDot.ok{background:#2c2}
+#rCnt{margin-left:auto;font-size:22px;color:var(--p)}
+#rTitle{font-size:20px;font-weight:800;color:var(--p)}
+#rNotes{background:#fff;border-radius:14px;padding:12px;font-size:14px;min-height:60px;max-height:22vh;overflow:auto;white-space:pre-wrap;border:2px solid var(--pl)}
+#rBtns{display:flex;gap:12px}
+#rBtns button{flex:1;height:22vh;min-height:110px;font-size:46px;border:0;border-radius:22px;background:var(--pl);color:var(--p)}
+#rBtns #rNext{background:var(--p);color:#fff}
+#rBtns button:active{transform:scale(.97)}
+#rPad{height:20vh;min-height:110px;border-radius:18px;background:#2a1b20;color:#ffffff88;display:flex;align-items:center;justify-content:center;font-size:14px;touch-action:none;text-align:center;padding:10px}
+#rRow{display:flex;gap:8px}
+#rRow button{flex:1;border:2px solid var(--p);background:#fff;color:var(--p);padding:12px 4px;border-radius:12px;font-weight:600;font-size:15px}
+#rRow #rStart{background:var(--p);color:#fff}
+#rList{display:flex;flex-direction:column;gap:6px}
+#rList div{background:#fff;border:2px solid var(--pl);border-radius:10px;padding:9px 12px;font-size:14px}
+#rList div.on{border-color:var(--p);background:var(--pl);font-weight:600}
+#pToggle{display:none;position:absolute;right:8px;top:8px;width:46px;height:46px;border-radius:50%;border:0;background:var(--p);color:#fff;font-size:22px;box-shadow:0 2px 8px #0004;z-index:5;align-items:center;justify-content:center}
+#mCode{font-size:38px;font-weight:800;letter-spacing:8px;color:var(--p);margin:2px 0}
+#mSrv{font-size:12px;color:#9b7e86}
+#scan .photo{background:var(--p);color:#fff}
+#home{position:fixed;inset:0;background:var(--bg);z-index:240;display:none;align-items:center;justify-content:center;padding:16px}
+#home.on{display:flex}
+.hbox{width:min(380px,100%);text-align:center;display:flex;flex-direction:column;gap:12px}
+.hbox h2{margin:0;color:var(--p);font-size:28px}
+.hbox p{margin:0}
+.hbox small{color:#9b7e86;line-height:1.4}
+.hbox button{border:0;border-radius:16px;padding:16px;font-size:18px;font-weight:700;background:var(--p);color:#fff}
+.hbox button.ghost{background:#fff;color:var(--p);border:2px solid var(--p)}
+.hcode{display:flex;gap:8px}
+.hcode input{flex:1;min-width:0;border:2px solid var(--pl);border-radius:14px;padding:12px;font-size:18px;font-family:inherit;text-transform:uppercase;text-align:center;letter-spacing:3px}
+.hcode button{padding:12px 16px;font-size:16px}
+@media(max-width:900px){
+  #app{grid-template-columns:1fr;grid-template-rows:52px minmax(0,1fr) 84px auto;grid-template-areas:"top" "center" "list" "props"}
+  #top b,.lb{display:none}
+  #top button{padding:9px 13px;font-size:18px}
+  #list{flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:0;border-top:2px solid var(--pl);padding:8px;align-items:center}
+  #thumbs{flex-direction:row!important}
+  .th{width:112px;height:63px}
+  .thin{transform:scale(.0875)}
+  #addSlide{white-space:nowrap;flex:none;height:63px;padding:0 12px}
+  #props{display:none;border-left:0;border-top:2px solid var(--p);max-height:42vh}
+  #app.po #props{display:block}
+  #pToggle{display:flex}
+  input,select,textarea{font-size:16px!important}
+  .row button{padding:9px 12px;font-size:14px}
+  #pbar{bottom:calc(14px + env(safe-area-inset-bottom))}
+}
+#remote{padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))}
 </style>
 </head>
 <body>
 
-<a class="ar-volver" href="productos.html">&#8592; Volver</a>
-<button class="ar-cartasbtn" id="btnCartas" type="button">🃏 Ver cartas</button>
-<div class="sh-cart-wrap">
-  <button class="sh-ibtn" id="shCartBtn" aria-label="Carrito"><img src="carrito.svg" alt="carrito"><span class="sh-badge">0</span></button>
+<div id="app">
+  <header id="top">
+    <b>🍰 Presentador</b>
+    <button id="bPdf" title="Abrir PDF">📄<span class="lb"> Abrir PDF</span></button>
+    <button id="bText" title="Texto">T<span class="lb"> Texto</span></button>
+    <button id="bImg" title="Imagen / GIF">🖼<span class="lb"> Imagen / GIF</span></button>
+    <button id="bVid" title="Video">🎬<span class="lb"> Video</span></button>
+    <button id="bUrl" title="Desde URL">🔗<span class="lb"> Desde URL</span></button>
+    <button id="bShape" title="Forma">⬛<span class="lb"> Forma</span></button>
+    <span class="sp"></span>
+    <button id="bSave" title="Guardar">💾<span class="lb"> Guardar</span></button>
+    <button id="bLoad" title="Abrir proyecto">📂<span class="lb"> Abrir proyecto</span></button>
+    <button id="bScan" title="Escanear QR">📷<span class="lb"> Escanear QR</span></button>
+    <button id="bRemote" title="Control remoto">📱<span class="lb"> Control remoto</span></button>
+    <button id="bPlay" class="go" title="Presentar">▶<span class="lb"> Presentar</span></button>
+  </header>
+  <aside id="list"><div id="thumbs" style="display:flex;flex-direction:column;gap:8px"></div><button id="addSlide">+ Diapositiva</button></aside>
+  <main id="center"><div id="stageBox"><div id="stage" class="edit"></div></div><button id="pToggle" title="Propiedades">⚙</button></main>
+  <aside id="props"></aside>
 </div>
 
-<!-- Escena AR: las anclas se crean desde la lista CARTAS (abajo).
-     OJO: lleva el atributo "embedded" para que A-Frame NO se ponga a pantalla completa encima del video. -->
-<div id="ar">
-  <a-scene id="escenaAr" embedded background="transparent: true"
-    mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; maxTrack: 1; filterMinCF: 0.0001; filterBeta: 0.001;"
-    color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false">
-    <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
-    <a-light type="ambient" color="#ffffff" intensity="1.1"></a-light>
-    <a-light type="directional" color="#fff1e0" intensity="1.2" position="0.5 1 1"></a-light>
-  </a-scene>
+<input type="file" id="fPdf" accept="application/pdf" hidden>
+<input type="file" id="fImg" accept="image/*" multiple hidden>
+<input type="file" id="fVid" accept="video/*" hidden>
+<input type="file" id="fProj" accept=".json,application/json" hidden>
+
+<div id="pres">
+  <div id="pstage"></div>
+  <div id="laser"></div>
+  <div id="black"></div>
+  <div id="pbar"><button id="pPrev">◀</button><span id="pCnt"></span><button id="pNext">▶</button><button id="pFs" title="Pantalla completa">⛶</button><button id="pExit">✕</button></div>
 </div>
 
-<!-- Inicio -->
-<section class="ar-pantalla" id="pInicio">
-  <img class="logo" src="pinky.svg" alt="Pinky" onerror="this.style.display='none'">
-  <h1 class="ar-titulo">ArSweetCards</h1>
-  <p class="ar-sub">Apunta la cámara a una carta Sweet Help y mira tu postre cobrar vida.</p>
-  <button class="ar-btn" id="btnCamara">Activar cámara</button>
-  <button class="ar-btn sec" id="btnCartas2" type="button">Ver cartas digitales</button>
-  <p class="ar-nota">Te pediremos permiso para usar la cámara. La imagen no se guarda ni se envía a ningún lado.</p>
-</section>
+<div id="modal"><div id="mbox">
+  <button class="x" id="mClose">×</button>
+  <h3>📱 Control remoto</h3>
+  <div style="font-size:13px">Escanea el código con la cámara del celular</div>
+  <div id="qr"></div>
+  <div style="font-size:12px">o escribe este código en el celular:</div>
+  <div id="mCode">······</div>
+  <div id="mSrv"></div>
+  <div id="mcount">Esperando celular…</div>
+  <input id="mBase" placeholder="https://tusitio.com/presentador.html" title="URL pública de esta página">
+  <div id="mwarn">Esta página está abierta como archivo. Para que el celular pueda entrar, sube el HTML a tu hosting y escribe arriba su URL pública (https://…).</div>
+  <div style="font-size:11px;margin-top:8px;color:#9b7e86;word-break:break-all" id="mUrl"></div>
+</div></div>
 
-<!-- Cargando -->
-<section class="ar-pantalla oscura" id="pCarga" hidden>
-  <div class="rueda"></div>
-  <p class="ar-sub">Preparando la cámara…</p>
-</section>
-
-<!-- Error -->
-<section class="ar-pantalla oscura" id="pError" hidden>
-  <h2 class="ar-titulo" style="font-size:2.4rem">¡Ups!</h2>
-  <p class="ar-sub" id="errorTexto"></p>
-  <button class="ar-btn" id="btnReintentar">Intentar de nuevo</button>
-</section>
-
-<!-- Guía de escaneo -->
-<div class="ar-guia" id="guia" aria-hidden="true">
-  <div class="ar-marco"><i></i><i></i><i></i><i></i></div>
-  <span>Apunta a una carta Sweet Help</span>
+<div id="remote">
+  <div id="rTop"><span id="rDot"></span><span id="rSt">Conectando…</span><span id="rCnt"></span><button id="rUnlink">Desvincular</button></div>
+  <div id="rTitle"></div>
+  <div id="rNotes"></div>
+  <div id="rBtns"><button id="rPrev">◀</button><button id="rNext">▶</button></div>
+  <div id="rPad">Toca y arrastra aquí para mover el puntero láser en la pantalla</div>
+  <div id="rRow"><button id="rStart">▶ Iniciar</button><button id="rBlack">⬛ Negro</button><button id="rStop">✕ Salir</button></div>
+  <div id="rList"></div>
 </div>
 
-<!-- Panel de la carta -->
-<div class="ar-panel" id="panel" role="status" aria-live="polite">
-  <div class="ar-fila">
-    <img class="ar-miniatura" id="pImg" src="" alt="">
-    <div class="ar-datos">
-      <h2 class="ar-nombre" id="pNombre"></h2>
-      <div class="ar-precio" id="pPrecio"></div>
-      <p class="ar-ing"><b id="pIngEt">Ingredientes:</b> <span id="pIng"></span></p>
-    </div>
-    <a class="ar-mas" id="pMas" href="#" role="button" aria-label="Agregar al carrito" data-agregar data-id="" data-nombre="" data-precio="" data-img="">+</a>
-  </div>
-  <p class="ar-kit" id="pKit">El 10% de tu compra va destinado a un kit alimenticio <img src="kitmini.svg" alt="" onerror="this.remove()"></p>
+<div id="scan">
+  <div style="font-weight:800;font-size:18px">📷 Vincular con la pantalla</div>
+  <div class="box"><video id="scanVid" playsinline muted autoplay></video></div>
+  <div id="scanMsg">Apunta al código QR que aparece en 📱 Control remoto de la computadora</div>
+  <button id="scanPhotoBtn" class="photo">📸 Tomar foto del QR</button>
+  <input type="file" id="scanPhoto" accept="image/*" capture="environment" hidden>
+  <div class="alt"><input id="scanUrl" placeholder="…o escribe el código (6 letras)" autocapitalize="characters" autocomplete="off"><button id="scanGo" style="padding:6px 14px">Ir</button></div>
+  <button id="scanClose">Cancelar</button>
 </div>
-
-<!-- Galería de cartas digitales -->
-<section class="gal" id="gal" hidden>
-  <div class="gal-top">
-    <h2>Cartas digitales</h2>
-    <button class="gal-x" id="galX" type="button">Cerrar</button>
-  </div>
-  <p class="gal-tip">Toca una carta para verla grande y apúntale la cámara desde otro celular.</p>
-  <div class="gal-grid" id="galGrid"></div>
-</section>
-<div class="vis" id="vis" hidden>
-  <img id="visImg" src="" alt="">
-  <button class="vis-p" id="visP" type="button" aria-label="Anterior">&#8249;</button>
-  <button class="vis-n" id="visN" type="button" aria-label="Siguiente">&#8250;</button>
-  <button class="vis-x" id="visX" type="button">Cerrar</button>
-  <div class="vis-nom" id="visNom"></div>
-</div>
-
-<div class="ar-toast" id="toast" role="status"></div>
-<div class="ar-demo" id="demo" hidden></div>
+<div id="home"><div class="hbox">
+  <div style="font-size:46px">🍰</div>
+  <h2>Presentador</h2>
+  <p>¿Vas a usar el celular como control remoto?</p>
+  <button id="hScan">📷 Escanear QR</button>
+  <div class="hcode"><input id="hCode" placeholder="CÓDIGO" maxlength="40" autocapitalize="characters" autocomplete="off"><button id="hLink">Vincular</button></div>
+  <button id="hEdit" class="ghost">✏️ Abrir el editor</button>
+  <small>En la computadora abre 📱 Control remoto: ahí aparece el QR y el código de 6 letras.</small>
+</div></div>
+<div id="toast"></div>
+<div id="busy"></div>
 
 <script>
-/* =====================================================================
-   ARSWEETCARDS  —  reconocimiento de cartas con la cámara
+(()=>{
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LS={get:k=>{try{return localStorage.getItem(k)}catch(_){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}},del:k=>{try{localStorage.removeItem(k)}catch(_){}}};
+let tT;const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(tT);tT=setTimeout(()=>t.style.display='none',2600)};
+const busyMsg=m=>{const b=$('#busy');if(m){b.textContent=m;b.style.display='flex'}else b.style.display='none'};
 
-   CÓMO FUNCIONA
-   1) Las imágenes de TUS cartas se "compilan" en un archivo  targets.mind
-      (MindAR aprende a reconocerlas). Se hace una sola vez:
-        https://hiukim.github.io/mind-ar-js-doc/tools/compile
-      (Ahora se usa un targets.mind con 12 cartas; el orden está en la lista CARTAS.)
-      a la MISMA carpeta que este HTML.
-   2) Cada carta de la lista CARTAS se enlaza con su posición en ese
-      archivo mediante  indice  (0 = 00.png, 1 = 01.png, etc.).
-   3) Al reconocer una carta aparece su modelo 3D encima y un panel con
-      nombre, precio, ingredientes y el botón + para el carrito.
+const W=1280,H=720;
+const TRANS={none:'Sin transición',fade:'Desvanecer',slideL:'Deslizar ←',slideR:'Deslizar →',slideU:'Subir ↑',slideD:'Bajar ↓',cover:'Cubrir',zoom:'Zoom',flip:'Giro 3D',rotate:'Girar y escalar',blur:'Desenfoque',wipe:'Cortina →',curtain:'Cortina central',circle:'Círculo'};
+const ANIMS={none:'Ninguna',fade:'Aparecer',left:'Entrar desde izquierda',right:'Entrar desde derecha',up:'Subir',down:'Bajar',zoom:'Zoom',bounce:'Rebote',spin:'Giro',blur:'Desenfoque'};
+const FONTS={Poppins:'Poppins',Montserrat:'Montserrat',Pacifico:'Pacifico','Bebas Neue':'Bebas Neue',Georgia:'Georgia','Courier New':'Courier New',Arial:'Arial'};
 
-   VER LAS CARTAS EN DIGITAL
-   - Botón "Ver cartas" (o abre  arsweetcards.html?cartas=1 en el
-     computador). Muestra las cartas en pantalla; apúntales la cámara
-     de OTRO celular que tenga abierto el AR.
-
-   PRUEBA SIN CARTAS:  arsweetcards.html?demo=1  simula cada carta.
-   IMPORTANTE: la cámara solo funciona con HTTPS (o localhost).
-   ===================================================================== */
-const POSTRE_ING = "leche entera, leche condensada, crema de leche, bizcocho de ";
-const CARTAS = [
-  { indice: 1,  tipo: "postre", id: "1", nombre: "Maracuyá Tropical", precio: 7500, img: "cardmaracuyatropical.svg", carta: "cartas/00.png",
-    ingredientes: POSTRE_ING + "vainilla, pulpa de maracuyá", modelo: "modelos/maracuyatropical.glb" },
-  { indice: 2,  tipo: "postre", id: "2", nombre: "Mora Silvestre", precio: 7500, img: "cardmorasilvestre.svg", carta: "cartas/01.png",
-    ingredientes: POSTRE_ING + "vainilla, mermelada de mora", modelo: "modelos/morasilvestre.glb" },
-  { indice: null,  tipo: "postre", id: "3", nombre: "Fresa Tentación", precio: 7500, img: "cardfresatentacion.svg", carta: "cartas/02.png",
-    ingredientes: POSTRE_ING + "vainilla, mermelada de fresa", modelo: "modelos/fresatentacion.glb" },
-  { indice: 3,  tipo: "postre", id: "4", nombre: "Choco Milo", precio: 7500, img: "cardchocomilo.svg", carta: "cartas/03.png",
-    ingredientes: POSTRE_ING + "chocolate, Milo", modelo: "modelos/chocomilo.glb" },
-  { indice: 4,  tipo: "postre", id: "5", nombre: "Choco Fresa", precio: 8000, img: "cardchocofresa.svg", carta: "cartas/04.png",
-    ingredientes: POSTRE_ING + "chocolate, mermelada de fresa", modelo: "modelos/chocofresa.glb" },
-  { indice: null,  tipo: "postre", id: "6", nombre: "Choco Mix", precio: 7500, img: "cardchocomilomix.svg", carta: "cartas/05.png",
-    ingredientes: POSTRE_ING + "mixto, Milo", modelo: "modelos/chocomilomix.glb" },
-
-  /* Cartas de colección (edita los textos a tu gusto) */
-  { indice: null,  tipo: "coleccion", nombre: "Pinky Lisa",        carta: "cartas/06.png", texto: "Pinky se inspira en La Mona Lisa." },
-  { indice: 5,  tipo: "coleccion", nombre: "Pinky Grito",       carta: "cartas/07.png", texto: "Pinky se inspira en El grito, de Munch." },
-  { indice: 6,  tipo: "coleccion", nombre: "Pinky Noche",       carta: "cartas/08.png", texto: "Pinky se inspira en La noche estrellada, de Van Gogh." },
-  { indice: 7,  tipo: "coleccion", nombre: "Pinky Creación",    carta: "cartas/09.png", texto: "Pinky se inspira en La creación de Adán." },
-  { indice: 8, tipo: "coleccion", nombre: "Pinky Vitruvio",    carta: "cartas/10.png", texto: "Pinky se inspira en el Hombre de Vitruvio." },
-  { indice: 11, tipo: "coleccion", nombre: "Pinky Chambeadora", carta: "cartas/11.png", texto: "Pinky se pone a trabajar por quienes más lo necesitan." },
-  { indice: null, tipo: "coleccion", nombre: "Pinky Repartidora", carta: "cartas/12.png", texto: "Pinky lleva la ayuda en moto hasta quien la necesita." },
-  { indice: null, tipo: "coleccion", nombre: "Pinky Repostera",   carta: "cartas/13.png", texto: "Pinky prepara los postres que ayudan a combatir el hambre." },
-  { indice: null, tipo: "coleccion", nombre: "Punto de Venta",    carta: "cartas/14.png", texto: "Aquí se venden los postres de Sweet Help." },
-  { indice: 9, tipo: "coleccion", nombre: "Kit",               carta: "cartas/15.png", texto: "Con cada compra, parte del dinero se destina a un kit alimenticio.", kit: true },
-  { indice: 10, tipo: "coleccion", nombre: "Postre",            carta: "cartas/16.png", texto: "La estrella de Sweet Help: el postre tres leches." },
-  { indice: 0, tipo: "coleccion", nombre: "Pinky Arroz",       carta: "cartas/17.png", texto: "Pinky se disfraza de arroz para ayudar contra el hambre." }
-];
-
-/* Ajustes del modelo 3D sobre la carta */
-const AR = {
-  anchoModelo: 0.75,     // ancho del modelo en "anchos de carta" (1 = tan ancho como la carta)
-  alturaSobreCarta: 0.03,// cuánto se levanta de la carta
-  giroMs: 9000,          // vuelta completa del modelo (ms). 0 = no gira
-  ocultarTrasMs: 1500    // ms que se queda el panel después de perder la carta
+/* ---------- Transiciones ---------- */
+function tKF(t){
+  const S=(a,b)=>[[{transform:a},{transform:'none'}],[{transform:'none'},{transform:b}]];
+  switch(t){
+    case'fade':return[[{opacity:0},{opacity:1}],null];
+    case'slideL':return S('translateX(100%)','translateX(-100%)');
+    case'slideR':return S('translateX(-100%)','translateX(100%)');
+    case'slideU':return S('translateY(100%)','translateY(-100%)');
+    case'slideD':return S('translateY(-100%)','translateY(100%)');
+    case'cover':return[[{transform:'translateX(100%)'},{transform:'none'}],[{transform:'none',filter:'brightness(1)'},{transform:'translateX(-25%)',filter:'brightness(.45)'}]];
+    case'zoom':return[[{transform:'scale(.5)',opacity:0},{transform:'none',opacity:1}],[{transform:'none',opacity:1},{transform:'scale(1.5)',opacity:0}]];
+    case'flip':return[[{transform:'rotateY(90deg)',opacity:0,offset:0},{transform:'rotateY(90deg)',opacity:0,offset:.5},{transform:'none',opacity:1,offset:1}],
+                      [{transform:'none',opacity:1,offset:0},{transform:'rotateY(-90deg)',opacity:0,offset:.5},{transform:'rotateY(-90deg)',opacity:0,offset:1}]];
+    case'rotate':return[[{transform:'rotate(-25deg) scale(.3)',opacity:0},{transform:'none',opacity:1}],[{opacity:1},{opacity:0}]];
+    case'blur':return[[{filter:'blur(40px)',opacity:0},{filter:'blur(0)',opacity:1}],[{filter:'blur(0)',opacity:1},{filter:'blur(40px)',opacity:0}]];
+    case'wipe':return[[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],null];
+    case'curtain':return[[{clipPath:'inset(0 50% 0 50%)'},{clipPath:'inset(0 0 0 0)'}],null];
+    case'circle':return[[{clipPath:'circle(0% at 50% 50%)'},{clipPath:'circle(75% at 50% 50%)'}],null];
+  }
+  return[null,null];
+}
+/* animaciones de entrada de elementos (un solo keyframe: termina en el estado natural) */
+const AK={
+  fade:[{opacity:0}],left:[{transform:'translateX(-400px)',opacity:0}],right:[{transform:'translateX(400px)',opacity:0}],
+  up:[{transform:'translateY(300px)',opacity:0}],down:[{transform:'translateY(-300px)',opacity:0}],
+  zoom:[{transform:'scale(0)',opacity:0}],spin:[{transform:'rotate(-540deg) scale(0)',opacity:0}],blur:[{filter:'blur(30px)',opacity:0}],
+  bounce:[{transform:'scale(0)',opacity:0,offset:0},{transform:'scale(1.2)',opacity:1,offset:.55},{transform:'scale(.9)',offset:.75},{transform:'scale(1.04)',offset:.9}]
 };
 
-const MONEDA = "$", LOCALE = "es-CO";
-const fmt = n => MONEDA + Number(n).toLocaleString(LOCALE);
-const $ = id => document.getElementById(id);
-const params = new URLSearchParams(location.search);
-const demo = params.get("demo") === "1";
-const soloCartas = params.get("cartas") === "1";
+/* ---------- Datos ---------- */
+let slides=[],cur=0,selId=null,scale=1;
+const newSlide=(o={})=>({id:uid(),bg1:'#ffffff',bg2:'#ffe0e1',grad:false,transition:'fade',tdur:700,notes:'',els:[],...o});
+const baseEl=(type,o)=>({id:uid(),type,x:0,y:0,w:300,h:200,rot:0,op:1,anim:'none',adur:700,adelay:0,...o});
+const getEl=id=>slides[cur].els.find(e=>e.id===id);
+const bgOf=s=>s.grad?`linear-gradient(135deg,${s.bg1},${s.bg2})`:s.bg1;
+const firstText=s=>{const t=s.els.find(e=>e.type==='text'&&e.text.trim());return t?t.text.trim().split('\n')[0].slice(0,50):''};
+const titleOf=(s,i)=>s.title||firstText(s)||'Diapositiva '+(i+1);
 
-const escena = $("escenaAr");
-const THREE = AFRAME.THREE;
-let actual = -1, tOcultar = null, tToast = null;
+/* ---------- Render (editor, miniaturas y presentación) ---------- */
+function renderSlide(s,o={}){
+  const sl=document.createElement('div');sl.className='slide';sl.style.background=bgOf(s);
+  s.els.forEach(e=>sl.appendChild(elNode(e,o)));
+  return sl;
+}
+function elNode(e,o){
+  const d=document.createElement('div');d.className='el';d.dataset.id=e.id;
+  Object.assign(d.style,{left:e.x+'px',top:e.y+'px',width:e.w+'px',height:e.h+'px',rotate:e.rot+'deg',opacity:e.op});
+  const i=document.createElement('div');i.className='in';d.appendChild(i);
+  const ph=t=>{const p=document.createElement('div');p.className='ph';p.textContent=t;return p};
+  if(e.type==='text'){
+    const t=document.createElement('div');t.className='txt';t.textContent=e.text;
+    Object.assign(t.style,{fontSize:e.size+'px',color:e.color,fontWeight:e.bold?800:400,fontStyle:e.italic?'italic':'normal',textAlign:e.align,fontFamily:`'${e.font}',sans-serif`});
+    i.appendChild(t);
+  }else if(e.type==='image'){
+    const m=document.createElement('img');m.src=e.src;m.draggable=false;m.style.objectFit=e.fit;m.style.borderRadius=(e.radius||0)+'px';i.appendChild(m);
+  }else if(e.type==='video'){
+    if(o.thumb)i.appendChild(ph('🎬'));
+    else{const v=document.createElement('video');v.src=e.src+(o.edit&&e.src.startsWith('http')?'':'');v.muted=o.edit?true:!!e.muted;v.loop=!!e.loop;v.playsInline=true;v.preload='metadata';
+      v.controls=!o.edit&&!!e.controls;v.style.objectFit='contain';v.style.borderRadius=(e.radius||0)+'px';v.dataset.auto=e.autoplay?'1':'';i.appendChild(v)}
+  }else if(e.type==='embed'){
+    if(o.thumb||o.edit)i.appendChild(ph('▶ YouTube'));
+    else{const f=document.createElement('iframe');f.src='https://www.youtube.com/embed/'+e.vid+'?rel=0'+(e.autoplay?'&autoplay=1&mute=1':'');f.allow='autoplay; fullscreen; encrypted-media';f.allowFullscreen=true;i.appendChild(f)}
+  }else if(e.type==='shape'){
+    const s=document.createElement('div');s.style.cssText=`width:100%;height:100%;background:${e.fill};border-radius:${e.shape==='circle'?'50%':(e.radius||0)+'px'}`;i.appendChild(s);
+  }
+  return d;
+}
 
-/* ---------- Panel ---------- */
-function mostrarCarta(i){
-  const c = CARTAS[i]; if(!c) return;
-  clearTimeout(tOcultar);
-  $("guia").classList.remove("on");
-  if(actual !== i){
-    actual = i;
-    const esPostre = c.tipo === "postre";
-    $("pImg").src = c.carta || c.img || ""; $("pImg").alt = c.nombre;
-    $("pNombre").textContent = c.nombre;
-    $("pPrecio").textContent = esPostre ? fmt(c.precio) : "";
-    $("pPrecio").hidden = !esPostre;
-    $("pIngEt").hidden = !esPostre;
-    $("pIng").textContent = esPostre ? c.ingredientes : (c.texto || "");
-    const m = $("pMas");
-    m.hidden = !esPostre;
-    if(esPostre){
-      m.dataset.id = c.id; m.dataset.nombre = c.nombre; m.dataset.precio = String(c.precio); m.dataset.img = c.img;
+/* ---------- Editor: pantalla ---------- */
+const stage=$('#stage');
+function fitStage(){
+  const c=$('#center'),w=c.clientWidth-40,h=c.clientHeight-40;
+  scale=Math.max(.1,Math.min(w/W,h/H));
+  stage.style.transform=`scale(${scale})`;stage.style.setProperty('--inv',(1/scale).toFixed(3));
+  const b=$('#stageBox');b.style.width=W*scale+'px';b.style.height=H*scale+'px';
+}
+function refreshStage(){
+  stage.innerHTML='';stage.appendChild(renderSlide(slides[cur],{edit:true}));markSel();
+}
+function markSel(){
+  stage.querySelectorAll('.el').forEach(n=>{
+    n.classList.toggle('sel',n.dataset.id===selId);
+    n.querySelector(':scope>.hnd')?.remove();
+    if(n.dataset.id===selId){const h=document.createElement('div');h.className='hnd';n.appendChild(h)}
+  });
+}
+function thumbInner(s){const w=document.createElement('div');w.className='thin';w.appendChild(renderSlide(s,{thumb:true}));return w}
+function drawList(){
+  const t=$('#thumbs');t.innerHTML='';
+  slides.forEach((s,i)=>{
+    const d=document.createElement('div');d.className='th'+(i===cur?' on':'');d.draggable=true;
+    const b=document.createElement('b');b.textContent=i+1;
+    d.append(thumbInner(s),b);
+    d.onclick=()=>selectSlide(i);
+    d.ondragstart=e=>e.dataTransfer.setData('text/plain',i);
+    d.ondragover=e=>{e.preventDefault();d.classList.add('over')};
+    d.ondragleave=()=>d.classList.remove('over');
+    d.ondrop=e=>{e.preventDefault();d.classList.remove('over');const from=+e.dataTransfer.getData('text/plain');if(isNaN(from)||from===i)return;
+      const [m]=slides.splice(from,1);slides.splice(i,0,m);cur=i;drawList();refreshStage();drawProps()};
+    t.appendChild(d);
+  });
+}
+function updateThumb(i=cur){const d=$('#thumbs').children[i];if(!d)return;d.querySelector('.thin').replaceWith(thumbInner(slides[i]))}
+function selectSlide(i){cur=i;selId=null;[...$('#thumbs').children].forEach((d,k)=>d.classList.toggle('on',k===i));refreshStage();drawProps()}
+function addSlide(){slides.splice(cur+1,0,newSlide({transition:slides[cur]?.transition||'fade'}));cur++;selId=null;drawList();refreshStage();drawProps()}
+function dupSlide(){const c=JSON.parse(JSON.stringify(slides[cur]));c.id=uid();c.els.forEach(e=>e.id=uid());slides.splice(cur+1,0,c);cur++;selId=null;drawList();refreshStage();drawProps()}
+function delSlide(){slides.splice(cur,1);if(!slides.length)slides.push(newSlide());cur=Math.min(cur,slides.length-1);selId=null;drawList();refreshStage();drawProps()}
+
+/* ---------- Editor: interacción ---------- */
+stage.addEventListener('pointerdown',ev=>{
+  const n=ev.target.closest('.el');
+  if(!n){if(!ev.target.closest('[contenteditable=true]')){selId=null;markSel();drawProps()}return}
+  if(n.classList.contains('editing'))return;
+  const e=getEl(n.dataset.id);if(!e)return;
+  const resize=ev.target.classList.contains('hnd');
+  if(selId!==e.id){selId=e.id;markSel();drawProps()}
+  if(!resize&&e.type==='text'){const now=Date.now();if(lastTap.id===e.id&&now-lastTap.t<400){lastTap={id:null,t:0};editText(n,e);return}lastTap={id:e.id,t:now}}
+  ev.preventDefault();
+  const sx=ev.clientX,sy=ev.clientY,ox=e.x,oy=e.y,ow=e.w,oh=e.h;
+  const mv=m=>{const dx=(m.clientX-sx)/scale,dy=(m.clientY-sy)/scale;
+    if(resize){e.w=Math.max(24,Math.round(ow+dx));e.h=Math.max(24,Math.round(oh+dy));n.style.width=e.w+'px';n.style.height=e.h+'px'}
+    else{e.x=Math.round(ox+dx);e.y=Math.round(oy+dy);n.style.left=e.x+'px';n.style.top=e.y+'px'}};
+  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);updateThumb();drawProps()};
+  addEventListener('pointermove',mv);addEventListener('pointerup',up);
+});
+let lastTap={id:null,t:0};
+function editText(n,e){
+  if(n.classList.contains('editing'))return;
+  const t=n.querySelector('.txt');t.contentEditable='true';n.classList.add('editing');t.focus();
+  const r=document.createRange();r.selectNodeContents(t);const sl=getSelection();sl.removeAllRanges();sl.addRange(r);
+  t.onblur=()=>{e.text=t.innerText.replace(/\n$/,'');t.contentEditable='false';n.classList.remove('editing');updateThumb();drawProps()};
+}
+stage.addEventListener('dblclick',ev=>{
+  const n=ev.target.closest('.el');if(!n)return;const e=getEl(n.dataset.id);if(!e||e.type!=='text')return;editText(n,e);
+});
+document.addEventListener('keydown',ev=>{
+  if(presenting){presKey(ev);return}
+  if(document.body.classList.contains('rem'))return;
+  const a=document.activeElement;if(a&&(/INPUT|TEXTAREA|SELECT/.test(a.tagName)||a.isContentEditable))return;
+  const e=selId&&getEl(selId);
+  if(e&&(ev.key==='Delete'||ev.key==='Backspace')){slides[cur].els=slides[cur].els.filter(x=>x!==e);selId=null;refreshStage();updateThumb();drawProps();ev.preventDefault()}
+  else if(e&&ev.key.startsWith('Arrow')){const k=ev.shiftKey?10:1;if(ev.key==='ArrowLeft')e.x-=k;if(ev.key==='ArrowRight')e.x+=k;if(ev.key==='ArrowUp')e.y-=k;if(ev.key==='ArrowDown')e.y+=k;refreshStage();updateThumb();drawProps();ev.preventDefault()}
+  else if(e&&(ev.ctrlKey||ev.metaKey)&&ev.key==='d'){dupEl();ev.preventDefault()}
+  else if(!e&&ev.key==='ArrowDown'&&cur<slides.length-1)selectSlide(cur+1);
+  else if(!e&&ev.key==='ArrowUp'&&cur>0)selectSlide(cur-1);
+});
+
+/* ---------- Editor: propiedades ---------- */
+const fld=(l,h)=>`<label class="f"><span>${l}</span>${h}</label>`;
+const inp=(k,v,t='number',x='')=>`<input data-k="${k}" type="${t}" value="${esc(v)}" ${x}>`;
+const sel=(k,v,o)=>`<select data-k="${k}">${Object.entries(o).map(([a,b])=>`<option value="${a}" ${a==v?'selected':''}>${b}</option>`).join('')}</select>`;
+const chk=(k,v,l)=>`<label class="chk"><input data-k="${k}" type="checkbox" ${v?'checked':''}> ${l}</label>`;
+function drawProps(){
+  const P=$('#props'),s=slides[cur],e=selId&&getEl(selId);let h='';
+  if(!e){
+    h+=`<h4>Diapositiva ${cur+1}</h4>
+    <label class="f"><span>Fondo</span><input data-s="bg1" type="color" value="${s.bg1}"></label>
+    <label class="chk"><input data-s="grad" type="checkbox" ${s.grad?'checked':''}> Degradado</label>
+    ${s.grad?`<label class="f"><span>Color 2</span><input data-s="bg2" type="color" value="${s.bg2}"></label>`:''}
+    <h4>Transición al entrar</h4>
+    <label class="f"><span>Tipo</span><select data-s="transition">${Object.entries(TRANS).map(([a,b])=>`<option value="${a}" ${a===s.transition?'selected':''}>${b}</option>`).join('')}</select></label>
+    <label class="f"><span>Duración (ms)</span><input data-s="tdur" type="number" min="100" max="4000" step="100" value="${s.tdur}"></label>
+    <div class="row"><button id="tAll">Aplicar a todas</button><button id="tTest">Probar</button></div>
+    <h4>Notas (se ven en el celular)</h4>
+    <textarea data-s="notes" placeholder="Notas del orador…">${esc(s.notes)}</textarea>
+    <div class="row"><button id="sL">◀ Mover</button><button id="sR">Mover ▶</button><button id="sDup">Duplicar</button><button id="sDel" class="dg">Eliminar</button></div>
+    <div class="hint">Doble clic en un texto para editarlo. Arrastra miniaturas para reordenar. Suelta archivos (PDF, imágenes, videos) sobre el lienzo para agregarlos.</div>`;
+  }else{
+    h+=`<h4>${{text:'Texto',image:'Imagen',video:'Video',embed:'YouTube',shape:'Forma'}[e.type]}</h4>`;
+    if(e.type==='text'){
+      h+=fld('Fuente',sel('font',e.font,FONTS))+fld('Tamaño',inp('size',e.size,'number','min="8" max="400"'))+fld('Color',inp('color',e.color,'color'))+
+         fld('Alineación',sel('align',e.align,{left:'Izquierda',center:'Centro',right:'Derecha'}))+chk('bold',e.bold,'Negrita')+chk('italic',e.italic,'Cursiva')+`<div class="row"><button id="eEdit">✏️ Editar texto</button></div>`;
     }
-    $("pKit").hidden = !(esPostre || c.kit);
-    if(navigator.vibrate) try{ navigator.vibrate(30); }catch(e){}
+    if(e.type==='image')h+=fld('Ajuste',sel('fit',e.fit,{contain:'Ajustar',cover:'Llenar',fill:'Estirar'}))+fld('Bordes',inp('radius',e.radius||0,'number','min="0" max="400"'));
+    if(e.type==='video')h+=chk('autoplay',e.autoplay,'Reproducir automático')+chk('loop',e.loop,'Repetir')+chk('muted',e.muted,'Silenciado')+chk('controls',e.controls,'Mostrar controles');
+    if(e.type==='embed')h+=chk('autoplay',e.autoplay,'Reproducir automático (silenciado)');
+    if(e.type==='shape')h+=fld('Forma',sel('shape',e.shape,{rect:'Rectángulo',circle:'Círculo'}))+fld('Color',inp('fill',e.fill,'color'))+fld('Bordes',inp('radius',e.radius||0,'number','min="0" max="400"'));
+    h+=`<h4>Posición</h4>`+fld('X',inp('x',e.x))+fld('Y',inp('y',e.y))+fld('Ancho',inp('w',e.w,'number','min="24"'))+fld('Alto',inp('h',e.h,'number','min="24"'))+
+       fld('Rotación',inp('rot',e.rot,'number','min="-360" max="360"'))+fld('Opacidad',inp('op',e.op,'range','min="0" max="1" step="0.05"'))+
+       `<div class="row"><button id="eCH">Centrar ↔</button><button id="eCV">Centrar ↕</button><button id="eFront">Al frente</button><button id="eBack">Al fondo</button></div>
+       <h4>Animación de entrada</h4>`+fld('Efecto',sel('anim',e.anim,ANIMS))+fld('Duración (ms)',inp('adur',e.adur,'number','min="100" step="100"'))+fld('Retraso (ms)',inp('adelay',e.adelay,'number','min="0" step="100"'))+
+       `<div class="row"><button id="eDup">Duplicar</button><button id="eDel" class="dg">Eliminar</button></div>`;
   }
-  $("panel").classList.add("on");
+  P.innerHTML=h;
+  const b=(id,f)=>{const x=$('#'+id);if(x)x.onclick=f};
+  b('tAll',()=>{slides.forEach(x=>{x.transition=s.transition;x.tdur=s.tdur});toast('Transición aplicada a todas')});
+  b('tTest',()=>startPresent(cur));
+  b('sDup',dupSlide);b('sDel',delSlide);b('eDup',dupEl);b('sL',()=>moveSlide(-1));b('sR',()=>moveSlide(1));
+  b('eEdit',()=>{const n=stage.querySelector(`[data-id="${e.id}"]`);if(n){$('#app').classList.remove('po');editText(n,e)}});
+  b('eDel',()=>{s.els=s.els.filter(x=>x!==e);selId=null;refreshStage();updateThumb();drawProps()});
+  b('eCH',()=>{e.x=Math.round((W-e.w)/2);afterEdit()});b('eCV',()=>{e.y=Math.round((H-e.h)/2);afterEdit()});
+  b('eFront',()=>{s.els=s.els.filter(x=>x!==e).concat(e);afterEdit()});
+  b('eBack',()=>{s.els=[e].concat(s.els.filter(x=>x!==e));afterEdit()});
 }
-function ocultarCarta(i){
-  if(i !== actual) return;
-  clearTimeout(tOcultar);
-  tOcultar = setTimeout(() => {
-    $("panel").classList.remove("on");
-    actual = -1;
-    if(!demo) $("guia").classList.add("on");
-  }, AR.ocultarTrasMs);
-}
-
-/* + : aviso de confirmación (el carrito lo maneja carrito.js con data-agregar) */
-$("pMas").addEventListener("click", e => {
-  e.preventDefault();
-  const n = $("pMas"); n.textContent = "✓";
-  setTimeout(() => { n.textContent = "+"; }, 1100);
-  avisar("¡Agregado! " + (CARTAS[actual] ? CARTAS[actual].nombre : "") + " 🛒");
+function afterEdit(){refreshStage();updateThumb();drawProps()}
+$('#props').addEventListener('input',ev=>{
+  const t=ev.target,s=slides[cur];
+  if(t.dataset.s){const k=t.dataset.s;s[k]=t.type==='checkbox'?t.checked:t.type==='number'?+t.value:t.value;
+    if(k==='grad'){drawProps()}
+    if(k==='bg1'||k==='bg2'||k==='grad'){refreshStage();updateThumb()}return}
+  const k=t.dataset.k;if(!k)return;const e=getEl(selId);if(!e)return;
+  e[k]=t.type==='checkbox'?t.checked:(t.type==='number'||t.type==='range')?+t.value:t.value;
+  refreshStage();updateThumb();
 });
-function avisar(txt){
-  const t = $("toast"); t.textContent = txt; t.classList.add("show");
-  clearTimeout(tToast); tToast = setTimeout(() => t.classList.remove("show"), 1800);
+function moveSlide(d){const j=cur+d;if(j<0||j>=slides.length)return;[slides[cur],slides[j]]=[slides[j],slides[cur]];cur=j;drawList();refreshStage();drawProps()}
+function dupEl(){const e=getEl(selId);if(!e)return;const c={...e,id:uid(),x:e.x+30,y:e.y+30};slides[cur].els.push(c);selId=c.id;afterEdit()}
+
+/* ---------- Agregar elementos ---------- */
+function addEl(e){slides[cur].els.push(e);selId=e.id;refreshStage();updateThumb();drawProps()}
+function addText(){addEl(baseEl('text',{x:240,y:280,w:800,h:160,text:'Escribe aquí',size:64,color:'#bd5c73',bold:true,italic:false,align:'center',font:'Poppins'}))}
+function addShape(){addEl(baseEl('shape',{x:440,y:210,w:400,h:300,fill:'#ffe0e1',shape:'rect',radius:24}))}
+const fitBox=(w,h,mw,mh)=>{const r=Math.min(mw/w,mh/h,1);return[Math.round(w*r),Math.round(h*r)]};
+function addImage(src){const im=new Image();im.onload=()=>{const[w,h]=fitBox(im.naturalWidth||400,im.naturalHeight||300,900,560);
+  addEl(baseEl('image',{src,w,h,x:Math.round((W-w)/2),y:Math.round((H-h)/2),fit:'contain',radius:0}))};im.onerror=()=>toast('No se pudo cargar la imagen');im.src=src}
+function addVideo(src){const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{const[w,h]=fitBox(v.videoWidth||640,v.videoHeight||360,900,560);
+  addEl(baseEl('video',{src,w,h,x:Math.round((W-w)/2),y:Math.round((H-h)/2),autoplay:true,loop:false,muted:false,controls:true,radius:0}))};v.onerror=()=>toast('No se pudo cargar el video');v.src=src}
+function addUrl(){
+  const u=(prompt('Pega la URL de una imagen, GIF, video (.mp4/.webm) o de YouTube:')||'').trim();if(!u)return;
+  const y=u.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
+  if(y)addEl(baseEl('embed',{vid:y[1],x:240,y:110,w:800,h:450,autoplay:false}));
+  else if(/\.(mp4|webm|ogv|mov)(\?|$)/i.test(u))addVideo(u);else addImage(u);
+}
+function addFiles(files){
+  [...files].forEach(f=>{
+    if(f.type==='application/pdf')importPdf(f);
+    else if(f.type.startsWith('video/'))addVideo(URL.createObjectURL(f));
+    else if(f.type.startsWith('image/')){const r=new FileReader();r.onload=()=>addImage(r.result);r.readAsDataURL(f)}
+  });
 }
 
-/* ---------- Modelos 3D encima de cada carta ---------- */
-function crearAnclas(){
-  CARTAS.forEach((c, i) => {
-    if(c.indice == null) return;                                // carta que aún no está en targets.mind
-    const ancla = document.createElement("a-entity");
-    ancla.setAttribute("mindar-image-target", "targetIndex: " + c.indice);
+/* ---------- PDF ---------- */
+async function importPdf(file){
+  if(!window.pdfjsLib){toast('No se pudo cargar el lector de PDF (revisa tu conexión)');return}
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  try{
+    busyMsg('Leyendo PDF…');
+    const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+    const fresh=slides.length===1&&!slides[0].els.length?[]:null;
+    const add=[];
+    for(let p=1;p<=pdf.numPages;p++){
+      busyMsg(`Importando página ${p} de ${pdf.numPages}…`);
+      const pg=await pdf.getPage(p),v0=pg.getViewport({scale:1}),sc=Math.min(1920/v0.width,1080/v0.height),vp=pg.getViewport({scale:sc});
+      const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);
+      const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
+      await pg.render({canvasContext:ctx,viewport:vp}).promise;
+      const[w,h]=(()=>{const r=Math.min(W/v0.width,H/v0.height);return[Math.round(v0.width*r),Math.round(v0.height*r)]})();
+      add.push(newSlide({bg1:'#000000',title:'Página '+p,transition:'slideL',
+        els:[baseEl('image',{src:c.toDataURL('image/jpeg',.88),x:Math.round((W-w)/2),y:Math.round((H-h)/2),w,h,fit:'contain',radius:0})]}));
+    }
+    if(fresh){slides=add;cur=0}else{slides.splice(cur+1,0,...add);cur++}
+    selId=null;drawList();refreshStage();drawProps();toast(pdf.numPages+' páginas importadas');
+  }catch(err){console.error(err);toast('No se pudo leer ese PDF')}
+  busyMsg('');
+}
 
-    ancla.addEventListener("targetFound", () => mostrarCarta(i));
-    ancla.addEventListener("targetLost", () => ocultarCarta(i));
-    escena.appendChild(ancla);
-    if(!c.modelo) return;                                       // carta de colección: sin modelo 3D
+/* ---------- Guardar / abrir proyecto ---------- */
+const blobToData=u=>fetch(u).then(r=>r.blob()).then(b=>new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(b)}));
+async function saveProject(){
+  busyMsg('Guardando proyecto…');
+  try{
+    const out=[];
+    for(const s of slides){const c={...s,els:[]};for(const e of s.els){const k={...e};if(k.src&&k.src.startsWith('blob:'))k.src=await blobToData(k.src);c.els.push(k)}out.push(c)}
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({v:1,slides:out})],{type:'application/json'}));
+    a.download='presentacion.json';a.click();
+  }catch(_){toast('No se pudo guardar')}
+  busyMsg('');
+}
+async function loadProject(f){
+  try{const o=JSON.parse(await f.text());if(!o.slides?.length)throw 0;slides=o.slides;cur=0;selId=null;drawList();refreshStage();drawProps();toast('Proyecto abierto')}
+  catch(_){toast('Archivo de proyecto no válido')}
+}
 
-    const giro = document.createElement("a-entity");           // gira alrededor de la vertical del modelo
-    if(AR.giroMs > 0) giro.setAttribute("animation", `property: rotation; from: 0 0 0; to: 0 0 360; dur: ${AR.giroMs}; easing: linear; loop: true`);
-    giro.setAttribute("animation__flota", "property: position; from: 0 0 0; to: 0 0 0.05; dir: alternate; dur: 1600; easing: easeInOutSine; loop: true");
+/* ---------- Presentación ---------- */
+let presenting=false,pi=-1,busy=false,pend=null,fsStart=false,mvT;
+const pres=$('#pres'),pstage=$('#pstage');
+function fitP(){const s=Math.min(innerWidth/W,innerHeight/H);pstage.style.transform=`translate(${-W*s/2}px,${-H*s/2}px) scale(${s})`}
+function startPresent(from=0,fs=false){
+  presenting=true;pres.classList.add('on');fitP();pstage.innerHTML='';pi=-1;busy=false;pend=null;$('#black').style.display='none';
+  if(fs)goFs();
+  go(from,true);bump();
+}
+function goFs(){const f=pres.requestFullscreen||pres.webkitRequestFullscreen;if(f){fsStart=true;try{Promise.resolve(f.call(pres)).catch(()=>{})}catch(_){}}}
+function toggleFs(){if(document.fullscreenElement)document.exitFullscreen();else goFs()}
+function endPresent(){
+  if(!presenting)return;presenting=false;pres.classList.remove('on');
+  pstage.querySelectorAll('video').forEach(v=>v.pause());pstage.innerHTML='';
+  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+  fsStart=false;drawList();sendState();
+}
+async function go(n,instant){
+  if(n<0||n>=slides.length)return;
+  if(busy){pend=n;return}
+  if(n===pi)return;
+  busy=true;pend=null;
+  const old=pstage.querySelector('.slide'),s=slides[n],L=renderSlide(s,{});
+  const[ik,ok]=instant||!old?[null,null]:tKF(s.transition),d=s.tdur||700;
+  L.style.zIndex=1;pstage.appendChild(L);pi=n;
+  const base=ik?d:0;
+  s.els.forEach(e=>{if(e.anim==='none')return;const node=L.querySelector(`[data-id="${e.id}"]>.in`);
+    if(node&&AK[e.anim])node.animate(AK[e.anim],{duration:e.adur||700,delay:base+(e.adelay||0),fill:'backwards',easing:'cubic-bezier(.2,.8,.2,1)'})});
+  if(ik){
+    const op={duration:d,easing:'cubic-bezier(.65,0,.35,1)',fill:'both'};
+    const a=L.animate(ik,op);if(ok&&old)old.animate(ok,op);
+    try{await a.finished}catch(_){}
+    a.cancel();
+  }
+  pstage.querySelectorAll('.slide').forEach(x=>{if(x!==L)x.remove()});L.style.zIndex='';
+  L.querySelectorAll('video').forEach(v=>{if(v.dataset.auto){v.play().catch(()=>{v.muted=true;v.play().catch(()=>{})})}});
+  $('#pCnt').textContent=`${pi+1} / ${slides.length}`;
+  busy=false;sendState();
+  if(pend!==null&&pend!==pi)go(pend);
+}
+const step=d=>{const t=(pend??pi)+d;go(Math.max(0,Math.min(slides.length-1,t)))};
+function bump(){pres.classList.add('mv');clearTimeout(mvT);mvT=setTimeout(()=>pres.classList.remove('mv'),2500)}
+function toggleBlack(){const b=$('#black');b.style.display=b.style.display==='block'?'none':'block';sendState()}
+function presKey(ev){
+  const k=ev.key;
+  if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(k)){step(1);ev.preventDefault()}
+  else if(['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(k)){step(-1);ev.preventDefault()}
+  else if(k==='Home')go(0);else if(k==='End')go(slides.length-1);
+  else if(k==='f'||k==='F')toggleFs();
+  else if(k==='b'||k==='B'||k==='.')toggleBlack();
+  else if(k==='Escape'&&!document.fullscreenElement)endPresent();
+}
+pres.addEventListener('mousemove',bump);pres.addEventListener('pointerdown',bump);
+let tx=null;pres.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+pres.addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;tx=null;if(Math.abs(dx)>60)step(dx<0?1:-1)},{passive:true});
+pres.addEventListener('click',ev=>{
+  if(ev.target.closest('#pbar')||ev.target.closest('video,iframe'))return;
+  if(ev.clientX<innerWidth*.35)step(-1);else step(1);
+});
+$('#pPrev').onclick=()=>step(-1);$('#pNext').onclick=()=>step(1);$('#pFs').onclick=toggleFs;$('#pExit').onclick=endPresent;
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&fsStart&&presenting)endPresent();fitP()});
+addEventListener('resize',()=>{fitStage();if(presenting)fitP()});
+function laser(x,y,on){const l=$('#laser');if(!on){l.style.display='none';return}l.style.display='block';
+  const s=Math.min(innerWidth/W,innerHeight/H);l.style.left=(innerWidth/2-W*s/2+x*W*s)+'px';l.style.top=(innerHeight/2-H*s/2+y*H*s)+'px'}
 
-    const modelo = document.createElement("a-entity");
-    modelo.setAttribute("gltf-model", c.modelo);
-    modelo.addEventListener("model-loaded", () => ajustarModelo(modelo));
-    modelo.addEventListener("model-error", () => {
-      console.warn("No se pudo cargar el modelo 3D:", c.modelo);
-      giro.removeChild(modelo);
-      const r = document.createElement("a-cylinder");          // marcador de respaldo
-      r.setAttribute("radius", "0.25"); r.setAttribute("height", "0.3");
-      r.setAttribute("color", "#f28f95"); r.setAttribute("rotation", "90 0 0");
-      r.setAttribute("position", "0 0 0.15");
-      giro.appendChild(r);
+/* ---------- Control remoto: lado de la pantalla ---------- */
+const PEER_OPTS={debug:0,config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'},
+  {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}]}};
+const CH='ABCDEFGHJKMNPQRSTUVWXYZ23456789',genId=()=>'shp-'+Array.from({length:6},()=>CH[Math.floor(Math.random()*CH.length)]).join('');
+let peer=null,conns=[],hostId=null;
+const stateMsg=()=>({t:'state',i:presenting?pi:cur,n:slides.length,on:presenting,black:$('#black').style.display==='block',
+  titles:slides.map(titleOf),notes:slides.map(s=>s.notes||'')});
+function sendState(){const m=stateMsg();conns.forEach(c=>{try{c.open&&c.send(m)}catch(_){}})}
+function updCount(){$('#mcount').textContent=conns.length?`✅ ${conns.length} celular${conns.length>1?'es':''} conectado${conns.length>1?'s':''}`:'Esperando celular…'}
+function onRemote(m){
+  switch(m.t){
+    case'next':if(presenting)step(1);break;
+    case'prev':if(presenting)step(-1);break;
+    case'goto':if(presenting)go(m.i);break;
+    case'start':if(!presenting){startPresent(cur);toast('Presentando — pulsa ⛶ para pantalla completa')}break;
+    case'stop':endPresent();break;
+    case'black':if(presenting)toggleBlack();break;
+    case'ptr':if(presenting)laser(m.x,m.y,m.on);break;
+  }
+}
+function startPeer(){
+  if(peer)return;
+  if(!window.Peer){$('#mcount').textContent='No se pudo cargar PeerJS (revisa tu conexión)';return}
+  let id=LS.get('shp_id');if(!/^shp-[A-Z0-9]{6}$/.test(id||''))id=genId();
+  peer=new Peer(id,PEER_OPTS);$('#mSrv').textContent='Conectando al servidor…';
+  peer.on('open',i=>{LS.set('shp_id',i);hostId=i;$('#mSrv').textContent='✓ Servidor listo';drawQR()});
+  peer.on('error',e=>{if(e.type==='unavailable-id'){LS.del('shp_id');try{peer.destroy()}catch(_){}peer=null;startPeer()}else $('#mcount').textContent='Error de conexión: '+e.type});
+  peer.on('disconnected',()=>{try{peer.reconnect()}catch(_){}});
+  peer.on('connection',c=>{
+    conns.push(c);
+    c.on('open',()=>{c.send(stateMsg());updCount()});
+    c.on('data',onRemote);
+    c.on('close',()=>{conns=conns.filter(x=>x!==c);updCount();laser(0,0,false)});
+    c.on('error',()=>{});
+  });
+}
+function drawQR(){
+  const base=($('#mBase').value||'').trim().split('#')[0];
+  $('#mCode').textContent=hostId?hostId.slice(4):'······';const q=$('#qr');q.innerHTML='';$('#mwarn').style.display=location.protocol==='file:'&&!base?'block':'none';
+  if(!hostId||!base){$('#mUrl').textContent='';return}
+  LS.set('shp_base',base);
+  const url=base+'#remote='+hostId;$('#mUrl').textContent=url;
+  if(window.QRCode)new QRCode(q,{text:url,width:220,height:220,correctLevel:QRCode.CorrectLevel.M});
+}
+function openRemote(){
+  $('#modal').classList.add('on');
+  const b=$('#mBase');if(!b.value)b.value=LS.get('shp_base')||(location.protocol==='file:'?'':location.href.split('#')[0]);
+  startPeer();drawQR();updCount();
+}
+$('#mBase').addEventListener('input',drawQR);
+$('#mClose').onclick=()=>$('#modal').classList.remove('on');
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')$('#modal').classList.remove('on')});
+
+/* ---------- Control remoto: lado del celular ---------- */
+function initRemote(id){
+  let rp,rc,wait=null,to=null;
+  const send=m=>{try{rc&&rc.open&&rc.send(m)}catch(_){}};
+  const st=(ok,t)=>{$('#rDot').className=ok?'ok':'';$('#rSt').textContent=t};
+  const vib=()=>navigator.vibrate&&navigator.vibrate(18);
+  const later=ms=>{clearTimeout(wait);wait=setTimeout(connect,ms)};
+  function connect(){
+    clearTimeout(wait);clearTimeout(to);
+    try{rc&&rc.close()}catch(_){}try{rp&&rp.destroy()}catch(_){}
+    st(false,'Conectando al servidor…');
+    rp=new Peer(PEER_OPTS);
+    rp.on('open',()=>{
+      st(false,'Buscando la pantalla…');
+      rc=rp.connect(id,{reliable:true});
+      to=setTimeout(()=>{if(!rc.open){st(false,'No se logra conectar. Revisa que 📱 Control remoto esté abierto en la computadora…');later(4000)}},12000);
+      rc.on('open',()=>{clearTimeout(to);st(true,'Conectado')});
+      rc.on('data',m=>{if(m.t==='state')rState(m)});
+      rc.on('close',()=>{st(false,'Desconectado, reconectando…');later(1500)});
+      rc.on('error',()=>{});
     });
-    giro.appendChild(modelo);
-    ancla.appendChild(giro);
-  });
-}
-
-/* Escala el modelo al ancho elegido, lo apoya sobre la carta y lo pone "de pie" */
-function ajustarModelo(el){
-  try{
-    const obj = el.getObject3D("mesh"); if(!obj) return;
-    obj.updateMatrixWorld(true);
-    const box = new THREE.Box3().setFromObject(obj);
-    const size = box.getSize(new THREE.Vector3()), centro = box.getCenter(new THREE.Vector3());
-    const k = AR.anchoModelo / (Math.max(size.x, size.z) || 1);
-    el.setAttribute("scale", `${k} ${k} ${k}`);
-    el.setAttribute("rotation", "90 0 0");                      // la carta es el "suelo": el modelo se para sobre ella
-    el.setAttribute("position", `${-centro.x * k} ${centro.z * k} ${-box.min.y * k + AR.alturaSobreCarta}`);
-  }catch(e){ console.warn("No se pudo ajustar el modelo", e); }
-}
-
-/* ---------- Cámara ---------- */
-const sistema = () => escena.systems["mindar-image-system"];
-
-function pantalla(id){
-  ["pInicio", "pCarga", "pError"].forEach(p => { $(p).hidden = (p !== id); });
-}
-function error(msg){
-  $("errorTexto").textContent = msg;
-  pantalla("pError");
-  $("guia").classList.remove("on");
-}
-async function arrancar(){
-  pantalla("pCarga");
-  try{
-    /* Comprobamos que targets.mind exista y se pueda leer antes de abrir la cámara */
-    const res = await fetch("targets.mind", { cache: "no-store" });
-    if(!res.ok) throw { name: "MindNoEncontrado", status: res.status };
-    const r = sistema().start();
-    if(r && r.catch) r.catch(e => falloCamara(e));
-  }catch(e){
-    if(e && e.name === "MindNoEncontrado") error("No se encontró targets.mind (error " + e.status + "). Revisa que esté en la misma carpeta que este HTML y con ese nombre exacto.");
-    else if(e instanceof TypeError) error("No se pudo leer targets.mind. Si abriste el archivo directo desde tu computador, súbelo a un sitio con HTTPS o usa localhost.");
-    else falloCamara(e);
+    rp.on('error',e=>{
+      clearTimeout(to);
+      st(false,e.type==='peer-unavailable'?'No encuentro esa pantalla. Abre 📱 Control remoto en la computadora y revisa el código.':'Sin conexión ('+e.type+'), reintentando…');
+      later(e.type==='peer-unavailable'?3000:4000);
+    });
+    rp.on('disconnected',()=>{try{rp.reconnect()}catch(_){}});
   }
-}
-function falloCamara(e){
-  console.warn(e);
-  const n = e && e.name;
-  if(n === "NotAllowedError" || n === "PermissionDeniedError") error("No pudimos usar la cámara. Permite el acceso en el navegador y vuelve a intentarlo.");
-  else if(!window.isSecureContext) error("La cámara solo funciona en una página segura (HTTPS). Abre esta página desde tu sitio publicado.");
-  else error("No pudimos iniciar la cámara ni leer las cartas. Revisa que targets.mind tenga las 18 imágenes (00 a 17) y se haya compilado con MindAR 1.2.x.");
+  function rState(m){
+    $('#rCnt').textContent=`${m.i+1} / ${m.n}`;
+    $('#rTitle').textContent=m.on?(m.titles[m.i]||''):'Presentación en espera';
+    $('#rNotes').textContent=m.notes[m.i]||'Sin notas';
+    $('#rStart').textContent=m.on?'⏮ Inicio':'▶ Iniciar';
+    $('#rBlack').textContent=m.black?'💡 Mostrar':'⬛ Negro';
+    $('#rList').innerHTML=m.titles.map((t,i)=>`<div data-i="${i}" class="${i===m.i?'on':''}">${i+1}. ${esc(t)}</div>`).join('');
+    window._rOn=m.on;
+  }
+  $('#rNext').onclick=()=>{vib();send({t:'next'})};
+  $('#rPrev').onclick=()=>{vib();send({t:'prev'})};
+  $('#rStart').onclick=()=>{vib();send(window._rOn?{t:'goto',i:0}:{t:'start'})};
+  $('#rBlack').onclick=()=>{vib();send({t:'black'})};
+  $('#rStop').onclick=()=>{if(confirm('¿Salir de la presentación?'))send({t:'stop'})};
+  $('#rList').onclick=e=>{const d=e.target.closest('[data-i]');if(d){vib();send({t:'goto',i:+d.dataset.i})}};
+  const pad=$('#rPad'),pt=e=>{const r=pad.getBoundingClientRect();send({t:'ptr',on:true,x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))})};
+  pad.addEventListener('pointerdown',e=>{pad.setPointerCapture(e.pointerId);pt(e)});
+  pad.addEventListener('pointermove',e=>{if(e.buttons||e.pressure)pt(e)});
+  const off=()=>send({t:'ptr',on:false,x:0,y:0});pad.addEventListener('pointerup',off);pad.addEventListener('pointercancel',off);
+  try{navigator.wakeLock&&navigator.wakeLock.request('screen')}catch(_){}
+  if(!window.Peer){st(false,'No se pudo cargar PeerJS (¿hay internet?)');return}
+  connect();
 }
 
-/* Asegura que el video de la cámara se vea: lo reacomoda y lo reproduce */
-function mostrarVideo(){
-  const v = document.querySelector("#ar video");
-  if(!v){ avisar("No se encontró el video de la cámara"); console.warn("Sin <video> en #ar"); return; }
-  v.setAttribute("playsinline", ""); v.setAttribute("muted", ""); v.muted = true;
-  if(v.paused) v.play().catch(()=>{});
-  window.dispatchEvent(new Event("resize"));      // MindAR recalcula tamaño/posición del video
-  console.log("Video cámara:", v.videoWidth + "x" + v.videoHeight, "pausado:", v.paused);
-  if(!v.videoWidth) avisar("La cámara no está enviando imagen");
+/* ---------- Escáner QR / código (para vincular el celular) ---------- */
+let scanStream=null,scanRun=false;
+const parseRemote=t=>{const m=String(t||'').match(/#remote=([\w-]{4,})/);return m?m[1]:null};
+const toId=t=>{t=String(t||'').trim();const m=parseRemote(t);if(m)return m;const c=t.toUpperCase().replace(/[^A-Z0-9]/g,'');return c.length===6?'shp-'+c:null};
+function linkTo(id){stopScan();$('#home').classList.remove('on');location.hash='#remote='+id;document.body.classList.add('rem');initRemote(id)}
+function stopScan(){
+  scanRun=false;$('#scan').classList.remove('on');
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}
+  $('#scanVid').srcObject=null;
 }
-
-escena.addEventListener("arReady", () => {
-  pantalla(null); $("guia").classList.add("on");
-  mostrarVideo();
-  setTimeout(mostrarVideo, 600);
-});
-escena.addEventListener("arError", e => falloCamara(e && e.detail ? e.detail : e));
-
-$("btnCamara").addEventListener("click", arrancar);
-$("btnReintentar").addEventListener("click", () => {
-  try{ sistema().stop(); }catch(e){}
-  arrancar();
-});
-
-/* ---------- Galería de cartas digitales ---------- */
-let visIdx = 0;
-function construirGaleria(){
-  const g = $("galGrid"); g.innerHTML = "";
-  CARTAS.forEach((c, i) => {
-    const b = document.createElement("button");
-    b.type = "button"; b.className = "gal-item";
-    const im = document.createElement("img");
-    im.src = c.carta; im.alt = c.nombre; im.loading = "lazy";
-    const sp = document.createElement("span"); sp.textContent = c.nombre;
-    b.appendChild(im); b.appendChild(sp);
-    b.addEventListener("click", () => abrirVisor(i));
-    g.appendChild(b);
-  });
+async function decodePhoto(f){
+  let src;
+  try{src=await createImageBitmap(f)}catch(_){src=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(f)})}
+  const sw=src.width||src.naturalWidth,sh=src.height||src.naturalHeight;
+  if(window.BarcodeDetector){try{const r=await new BarcodeDetector({formats:['qr_code']}).detect(src);if(r[0])return r[0].rawValue}catch(_){}}
+  if(!window.jsQR)return null;
+  for(const mx of [1200,800,1800,500]){
+    const k=Math.min(1,mx/Math.max(sw,sh)),c=document.createElement('canvas');c.width=Math.round(sw*k);c.height=Math.round(sh*k);
+    const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(src,0,0,c.width,c.height);
+    const r=jsQR(x.getImageData(0,0,c.width,c.height).data,c.width,c.height,{inversionAttempts:'attemptBoth'});if(r)return r.data;
+  }
+  return null;
 }
-function abrirGaleria(){ $("gal").hidden = false; }
-function cerrarGaleria(){
-  $("gal").hidden = true; cerrarVisor();
-  if(soloCartas) pantalla("pInicio");
+async function openScan(){
+  const msg=$('#scanMsg'),okTxt='Apunta al código QR que aparece en 📱 Control remoto de la computadora';
+  $('#scan').classList.add('on');msg.textContent='Abriendo cámara…';
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    msg.textContent='Esta página no está en https, por eso el navegador bloquea la cámara en vivo. Usa “Tomar foto del QR” o escribe el código.';return}
+  try{scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false})}
+  catch(e){msg.textContent=(e&&e.name==='NotAllowedError'?'Permiso de cámara denegado. Actívalo en los ajustes del navegador, o ':'No se pudo abrir la cámara. ')+'usa “Tomar foto del QR” o escribe el código.';return}
+  const v=$('#scanVid');v.srcObject=scanStream;try{await v.play()}catch(_){}
+  msg.textContent=okTxt;
+  const cv=document.createElement('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
+  const det=window.BarcodeDetector?new BarcodeDetector({formats:['qr_code']}):null;
+  scanRun=true;
+  const tick=async()=>{
+    if(!scanRun)return;
+    if(v.readyState>=2&&v.videoWidth){
+      let txt=null;
+      try{
+        if(det){const r=await det.detect(v);if(r[0])txt=r[0].rawValue}
+        if(!txt&&window.jsQR){
+          const k=Math.min(1,640/v.videoWidth);cv.width=Math.round(v.videoWidth*k);cv.height=Math.round(v.videoHeight*k);
+          cx.drawImage(v,0,0,cv.width,cv.height);
+          const r=jsQR(cx.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height);if(r)txt=r.data;
+        }
+      }catch(_){}
+      if(txt){const id=parseRemote(txt);
+        if(id){if(navigator.vibrate)navigator.vibrate(40);linkTo(id);return}
+        msg.textContent='Ese QR no es de este presentador. Prueba con el de 📱 Control remoto.'}
+    }
+    setTimeout(tick,120);
+  };
+  tick();
 }
-function abrirVisor(i){
-  visIdx = (i + CARTAS.length) % CARTAS.length;
-  const c = CARTAS[visIdx];
-  $("visImg").src = c.carta; $("visImg").alt = c.nombre;
-  $("visNom").textContent = c.nombre;
-  $("vis").hidden = false;
-}
-function cerrarVisor(){ $("vis").hidden = true; }
-$("btnCartas").addEventListener("click", abrirGaleria);
-$("btnCartas2").addEventListener("click", abrirGaleria);
-$("galX").addEventListener("click", cerrarGaleria);
-$("visX").addEventListener("click", cerrarVisor);
-$("visP").addEventListener("click", () => abrirVisor(visIdx - 1));
-$("visN").addEventListener("click", () => abrirVisor(visIdx + 1));
-document.addEventListener("keydown", e => {
-  if($("vis").hidden) return;
-  if(e.key === "ArrowLeft") abrirVisor(visIdx - 1);
-  else if(e.key === "ArrowRight") abrirVisor(visIdx + 1);
-  else if(e.key === "Escape") cerrarVisor();
-});
-construirGaleria();
+$('#bScan').onclick=openScan;
+$('#hScan').onclick=openScan;
+$('#scanClose').onclick=stopScan;
+$('#scanPhotoBtn').onclick=()=>$('#scanPhoto').click();
+$('#scanPhoto').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  const msg=$('#scanMsg');msg.textContent='Leyendo foto…';
+  try{const t=await decodePhoto(f),id=parseRemote(t);
+    if(id)linkTo(id);else msg.textContent=t?'Ese QR no es de este presentador.':'No pude leer el QR en la foto. Acércate para que se vea completo, o escribe el código.'}
+  catch(_){msg.textContent='No pude leer la foto. Prueba de nuevo o escribe el código.'}
+};
+const goCode=v=>{const id=toId(v);if(id)linkTo(id);else toast('Escribe el código de 6 letras o pega el enlace del QR')};
+$('#scanGo').onclick=()=>goCode($('#scanUrl').value);
+$('#hLink').onclick=()=>goCode($('#hCode').value);
+$('#hEdit').onclick=()=>$('#home').classList.remove('on');
+$('#rUnlink').onclick=()=>{location.hash='';location.reload()};
 
 /* ---------- Inicio ---------- */
-function iniciar(){
-  if(demo){
-    document.body.classList.add("demo");
-    pantalla(null);
-    const d = $("demo"); d.hidden = false;
-    CARTAS.forEach((c, i) => {
-      const b = document.createElement("button");
-      b.type = "button"; b.textContent = "Simular: " + c.nombre;
-      b.onclick = () => mostrarCarta(i);
-      d.appendChild(b);
-    });
-    return;     // en modo prueba no se activa la cámara ni la escena AR
-  }
-  crearAnclas();
+function initEditor(){
+  slides=[newSlide({bg1:'#bd5c73',bg2:'#f6a6b2',grad:true,transition:'fade',els:[
+    baseEl('text',{x:140,y:230,w:1000,h:150,text:'Mi presentación',size:96,color:'#ffffff',bold:true,italic:false,align:'center',font:'Poppins',anim:'zoom',adur:800}),
+    baseEl('text',{x:240,y:390,w:800,h:80,text:'Abre un PDF o agrega textos, imágenes y videos',size:34,color:'#ffe0e1',bold:false,italic:false,align:'center',font:'Poppins',anim:'up',adelay:400})]})];
+  $('#bPdf').onclick=()=>$('#fPdf').click();
+  $('#bImg').onclick=()=>$('#fImg').click();
+  $('#bVid').onclick=()=>$('#fVid').click();
+  $('#bLoad').onclick=()=>$('#fProj').click();
+  $('#bText').onclick=addText;$('#bShape').onclick=addShape;$('#bUrl').onclick=addUrl;$('#bSave').onclick=saveProject;
+  $('#bRemote').onclick=openRemote;$('#addSlide').onclick=addSlide;
+  $('#bPlay').onclick=()=>startPresent(cur,true);
+  ['fPdf','fImg','fVid'].forEach(id=>$('#'+id).onchange=e=>{addFiles(e.target.files);e.target.value=''});
+  $('#fProj').onchange=e=>{if(e.target.files[0])loadProject(e.target.files[0]);e.target.value=''};
+  const c=$('#center');
+  c.addEventListener('dragover',e=>e.preventDefault());
+  c.addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files.length)addFiles(e.dataTransfer.files)});
+  fitStage();drawList();refreshStage();drawProps();
+  new ResizeObserver(fitStage).observe(c);
+  $('#pToggle').onclick=()=>$('#app').classList.toggle('po');
+  if(matchMedia('(pointer:coarse) and (max-width:1000px)').matches)$('#home').classList.add('on');
+  addEventListener('beforeunload',e=>{if(slides.length>1||slides[0].els.length>2){e.preventDefault();e.returnValue=''}});
 }
-if(soloCartas){            // ?cartas=1 -> abre directo la galería (útil en el computador)
-  pantalla("pInicio");
-  abrirGaleria();
-}
-if(demo) iniciar();
-else if(escena.hasLoaded) iniciar();
-else escena.addEventListener("loaded", iniciar);
+if(/^#remote=/.test(location.hash)){document.body.classList.add('rem');initRemote(location.hash.slice(8))}
+else initEditor();
+})();
 </script>
-<script src="carrito.js"></script>
 </body>
 </html>
