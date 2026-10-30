@@ -1007,7 +1007,7 @@ function initRemote(id){
     const sig=m.ids.join(',');
     if(sig!==listSig){listSig=sig;$('#rList').innerHTML=m.ids.map((d,i)=>`<div class="rt" data-i="${i}" data-id="${d}"><img ${th[d]?`src="${th[d]}"`:''} alt=""><b>${i+1}</b></div>`).join('')}
     [...$('#rList').children].forEach((d,i)=>d.classList.toggle('on',i===m.i));
-    if(lastI!==m.i){const a=$('#rList').children[m.i];if(a)a.scrollIntoView({block:'nearest'})}
+    
     lastI=m.i;window._rOn=m.on;
     paintPrev();if(!gest)paintZoom();
   }
