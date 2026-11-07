@@ -1,0 +1,36 @@
+/* ===== ESTADO DE LA SOLICITUD ===== */
+main.emain{width:min(640px,94%);margin:0 auto;padding:26px 0 40px;flex:1 0 auto}
+.ebox{color:var(--m);display:flex;flex-direction:column;gap:14px;animation:erise .8s cubic-bezier(.2,.8,.2,1) both}
+@keyframes erise{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:none}}
+.ebox h1{font-size:clamp(26px,6vw,52px);font-weight:400;line-height:1;letter-spacing:.06em;text-transform:uppercase}
+.ebox .head{border:0;margin:0 0 6px;padding:0}
+.ebox .head p{font-size:clamp(13px,2.4vw,18px);letter-spacing:.12em;margin:12px 0 0}
+.ebox form{display:flex;flex-direction:column;gap:12px;max-width:none;margin:0}
+.ebox input,.ebox button{-webkit-appearance:none;appearance:none;width:100%;border:0;outline:0;font:inherit;font-size:clamp(16px,3vw,24px);letter-spacing:.14em;height:clamp(54px,9vw,72px);border-radius:999px;padding:0 24px;transition:box-shadow .2s,transform .2s,filter .2s}
+.ebox input{background:var(--m);color:#fff7f3;caret-color:#fff7f3;text-align:left;text-transform:uppercase}
+.ebox ::placeholder{color:var(--r);opacity:1}
+.ebox input:focus{box-shadow:0 0 0 4px rgba(255,233,224,.4)}
+.ebox button{background:var(--d);color:var(--r);cursor:pointer}
+.ebox button:hover{transform:scale(1.015);filter:brightness(1.25)}
+.ebox button:disabled{cursor:wait;filter:brightness(.9)}
+.ebox .bad{animation:esh .45s;box-shadow:0 0 0 4px #ff5a66!important}
+@keyframes esh{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+.eres{position:relative;background:var(--m);color:#ffe9e0;border-radius:clamp(28px,6vw,52px);padding:clamp(24px,5vw,40px) clamp(22px,5vw,40px);text-align:left;animation:erise .5s cubic-bezier(.2,.8,.2,1) both}
+.eres[hidden]{display:none}
+.eres h2{font-size:clamp(24px,5vw,38px);font-weight:400;letter-spacing:.08em;margin:10px 0 4px;text-transform:uppercase}
+.eres p{white-space:pre-line;overflow-wrap:anywhere;font-size:clamp(14px,2.6vw,18px);line-height:1.5;letter-spacing:.06em}
+.eres small{display:block;margin-top:14px;font-size:12px;letter-spacing:.1em;opacity:.7}
+.edot{display:inline-block;width:46px;height:16px;border-radius:16px;background:#888}
+.edot.revision{background:#ffbd1c}.edot.aprobado{background:#35c514}.edot.cambios{background:#ffd23f}.edot.rechazado{background:#ff0022}.edot.nada{background:#a42b34}
+
+/* ===== FONDOS BLANCOS + TEXTO ROJO (paleta de la marca) ===== */
+.ebox{color:#a42b34}
+.ebox .head p{color:#a42b34;line-height:1.5;letter-spacing:.05em}
+.ebox input{background:#fff;color:#521c2b;caret-color:#521c2b;border:2px solid #a42b34}
+.ebox ::placeholder{color:#a42b34;opacity:.6}
+.ebox input:focus{box-shadow:0 0 0 4px rgba(164,43,52,.25)}
+.ebox button{background:#a42b34;color:#fff}
+.eres{background:#fff;color:#a42b34;border:3px solid #a42b34}
+.eres h2{color:#a42b34}
+.eres p{background:#fff;border:2px solid #e8c9c5;border-radius:22px;padding:16px 20px;margin-top:14px;line-height:1.6;letter-spacing:.03em;color:#a42b34}
+.eres small{opacity:1;color:#521c2b}

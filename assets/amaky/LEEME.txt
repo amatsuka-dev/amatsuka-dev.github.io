@@ -1,0 +1,17 @@
+AMAKY - mascota virtual
+=======================
+Cada animacion tiene MAXIMO 2 frames:  nombre_1.svg  y  nombre_2.svg
+Lienzo de Amaky: 128 x 128 (viewBox 0 0 128 128). Los pies tocan la linea y=116.
+Caneca roja: 96 x 130 (viewBox 0 -18 96 130), 1 = cerrada, 2 = abierta.
+Para cambiar un dibujo solo reemplaza el archivo con el mismo nombre y mismo tamano de lienzo.
+Mira siempre a la DERECHA (el codigo la voltea sola cuando camina a la izquierda).
+
+idle    parada (2: normal / parpadeo)          walk   caminar (pasos alternados)
+run     correr, cursor lejos (con lineas)      sleep  dormir (Zzz y burbuja)
+sit     sentada moviendo la cola               yawn   bostezo antes de dormir/despertar
+happy   saltito feliz                          love   corazones (al darle clic)
+grab    colgada cuando la agarras              fall   2 = en el aire / 1 = aterrizaje
+look    curiosa con ? (cursor quieto cerca)    scared asustada (sobre la caneca)
+dizzy   mareada (si la sacudes)                wave   saludo al aparecer
+caneca_1 / caneca_2  caneca roja cerrada / abierta
+cling   agarrada del cursor (colgando de el)

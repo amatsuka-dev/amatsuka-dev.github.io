@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Amatsuka Creators</title><link rel="stylesheet" href="../css/style.css"><link rel="stylesheet" href="../css/contacto.css"><script>try{var t=localStorage.getItem("tema");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script><link rel="stylesheet" href="../css/tema.css"></head><body class="red"><main class="cmain" id="cmain"><div class="scr">
+
+<div class="head"><h1>Contactanos</h1><p>Cuéntanos tu idea de evento o serie.</p><a class="lnk" href="../estado/">¿Ya enviaste una solicitud? Consulta su estado</a></div>
+
+<form id="cf" novalidate autocomplete="off">
+<input id="fp" name="proyecto" type="text" placeholder="Nombre Del Proyecto" maxlength="60" aria-label="Nombre del proyecto">
+<textarea id="fd" name="descripcion" placeholder="Describe Tu Proyecto" maxlength="700" aria-label="Describe tu proyecto"></textarea>
+<input id="fn" name="nombre" type="text" placeholder="tu nombre" maxlength="40" aria-label="Tu nombre">
+<input id="fe" name="email" type="email" placeholder="Tu Correo" maxlength="80" aria-label="Tu correo" autocomplete="email">
+<input id="fc" name="contacto" type="text" placeholder="Contacto (Discord, WhatsApp...)" maxlength="60" aria-label="Contacto: Discord, WhatsApp u otro">
+<button id="fb" type="submit">Generar Plantilla y Enviar</button>
+</form>
+
+
+<div class="prev" id="card" aria-live="polite">
+<div class="pbar"><s></s><s></s><s class="r"></s></div>
+<div class="pbody"><h2 id="pp" class="hint">Nombre Del Proyecto</h2><small id="pn" class="hint">tu nombre</small><p id="pd" class="hint">Describe Tu Proyecto</p></div>
+<div class="plogo"><img class="A" alt="" src="../assets/rojo/A.svg"><img class="M" alt="" src="../assets/rojo/Matsuka.svg"><img class="C" alt="" src="../assets/rojo/Creators.svg"></div>
+</div>
+
+<div class="side"><a id="ic-mail" href="mailto:amatsukacreators@gmail.com" title="Correo"><img src="../assets/redes/correo.svg" alt="Correo"></a><a id="ic-dc" title="Discord" target="_blank" rel="noopener"><img src="../assets/redes/discord.svg" alt="Discord"></a></div>
+
+</div></main>
+<div class="ovl" id="res" hidden role="dialog" aria-modal="true" aria-labelledby="rt"><div class="rwin"><div class="rbar"><s></s><s></s><button type="button" class="rx" id="rx" aria-label="Cerrar" title="Cerrar"></button></div><div class="rbody"><p class="rt" id="rt">Tu código de solicitud</p><b id="rc">AMA-XXXXX-XXXXX</b><p class="rm" id="rm"></p><p class="rs" id="rs" aria-live="polite"></p><div class="rb"><button type="button" id="rcp">Copiar código</button><button type="button" id="rdl">Descargar .amatsuka</button></div><a href="../estado/" id="rst">Consultar el estado de mi solicitud</a></div></div></div>
+<script src="../js/datos.js"></script><script src="../js/amatsuka.js"></script><script src="../js/menu.js" data-root="../" data-page="contactos"></script><script src="../js/contacto.js"></script></body></html>

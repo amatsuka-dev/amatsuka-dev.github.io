@@ -1,0 +1,101 @@
+/* ===== TEMA CLARO / OSCURO + TRANSICION ROJA + SIN CONTORNOS =====
+   Se carga al final de cada pagina para tener la ultima palabra. */
+:root{--bg:#fff;--ac:#a42b34;--tx:#a42b34;--inp:#521c2b;--surf:#fbeeee;--surf2:#f4dcdc;--grad:rgba(251,238,238,.94);--ovl:rgba(82,28,43,.62);--shade:0 12px 32px rgba(82,28,43,.22);--shade-s:0 6px 18px rgba(82,28,43,.12)}
+html[data-theme=dark]{--bg:#1a0a0e;--ac:#a42b34;--tx:#f08a92;--inp:#ffe9e0;--surf:#2a1218;--surf2:#3a1a22;--grad:rgba(42,18,24,.94);--ovl:rgba(0,0,0,.74);--shade:0 12px 32px rgba(0,0,0,.55);--shade-s:0 6px 18px rgba(0,0,0,.35);color-scheme:dark}
+
+html,body.red,body.dark{background:var(--bg);background-color:var(--bg)}
+body.red,body.dark{color:var(--tx);transition:background-color .3s,color .3s}
+html[data-theme=dark] .logo img{filter:brightness(1.4) saturate(1.1)}
+.red .arrow,.dark .arrow{color:var(--tx)}
+
+/* ---- transicion entre paginas: ROJA, con logo y anillo en blanco ---- */
+.ld .blobs i{background:#a42b34}
+.ld img{filter:brightness(0) invert(1)}
+.ring{border-color:rgba(255,255,255,.28);border-top-color:#fff}
+
+/* ---- Mision y Vision: cuadros rojos con texto blanco ---- */
+.card,.red .card,.dark .card{background:#a42b34;color:#fff;border:0}
+.card h2,.card p{color:#fff}
+
+/* ---- sin contornos: ventanas, tarjetas y botones se distinguen por relleno y sombra ---- */
+.red .win,.dark .win{background:var(--surf);color:var(--tx);border:0;box-shadow:var(--shade-s)}
+.red .win .ph,.dark .win .ph{background:var(--surf);color:var(--tx)}
+.pw{background:var(--surf);color:var(--tx);border:0}
+.pinfo{background:var(--surf)}
+.md{background:var(--ovl)}
+.md .pw,.md .win{box-shadow:var(--shade)}
+.mx{background:#a42b34;color:#fff}
+.slider button{background:rgba(164,43,52,.9);color:#fff}
+.pc .ph em{background:linear-gradient(transparent,var(--grad));color:var(--tx)}
+.tlw{background:var(--surf);color:var(--tx);border:0}
+.tm{border-block:0}
+.tu i,.td i{background:var(--ac)}
+.fi{background:var(--surf2);border:0}
+.futbtn,.dark .futbtn{background:#a42b34;color:#fff}
+
+/* botones de iconos / filtros: relleno en vez de borde; activo = rojo */
+.ptools button,.dark .ptools button,.pcat button,.tz button,.dfil{background:var(--surf2);color:var(--tx);border:0}
+.ptools button.on,.pcat button.on,.dfil.on{background:#a42b34;color:#fff;box-shadow:none}
+.ptools button.on img,.dfil.on img{filter:brightness(0) invert(1)}
+html[data-theme=dark] .ptools button img,html[data-theme=dark] .dfil img{filter:brightness(0) invert(1)}
+
+/* boton Descargar: relleno rojo, icono blanco */
+.red nav a.dlb,.dark nav a.dlb{background:#a42b34;color:#fff;border:0;padding:7px 20px}
+nav a.dlb img{filter:brightness(0) invert(1)}
+
+/* formularios */
+input,textarea,.scr input,.scr textarea,.ebox input{background:var(--surf2);color:var(--inp);caret-color:var(--inp);border:0}
+input::placeholder,textarea::placeholder,.scr ::placeholder,.ebox ::placeholder{color:var(--tx);opacity:.6}
+.scr,.ebox,.scr .head p,.scr .lnk,.ebox .head p{color:var(--tx)}
+.scr #fb,.ebox button,button{color:#fff}
+.prev{background:var(--surf);border:0}
+.prev h2,.prev p,.prev .val,.prev .hint,.prev h2.hint,.prev p.hint{color:var(--tx)}
+.prev small{color:var(--tx)}
+.prev p{background:var(--surf2);border:0}
+.eres{background:var(--surf);color:var(--tx);border:0;box-shadow:var(--shade)}
+.eres h2,.eres small,.eres p{color:var(--tx)}
+.eres p{background:var(--surf2);border:0}
+
+/* ventana de resultado (contacto) */
+.ovl{background:var(--ovl)}
+.rwin{background:var(--surf);color:var(--tx);border:0;box-shadow:var(--shade)}
+.rbody .rt,.rbody .rs,.rbody .rm,.rbody a{color:var(--tx)}
+.rbody b{background:var(--surf2);border:0;color:var(--tx)}
+
+/* ---- boton de modo claro / oscuro (menu principal) ---- */
+.thm{display:inline-flex;align-items:center;justify-content:center;flex:none;align-self:center;gap:10px;width:34px;height:34px;padding:0;margin-left:14px;border:0;border-radius:50%;background:#a42b34;color:#fff;cursor:pointer}
+.thm svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.thm:hover svg{transform:rotate(30deg) scale(1.1)}
+.thm .sun{display:none}
+html[data-theme=dark] .thm .sun{display:block}
+html[data-theme=dark] .thm .moon{display:none}
+.thm .lbl{display:none}
+.go nav .thm{animation:nd .6s .5s both}
+nav .links{align-items:center}
+
+@media(max-width:700px){
+ .burger{border:0;background:var(--surf2);color:var(--tx)}
+ nav .links a{background:rgba(164,43,52,.1)}nav .links a.on{background:rgba(164,43,52,.2)}
+ html[data-theme=dark] nav .links a{background:rgba(255,255,255,.07)}
+ html[data-theme=dark] nav .links a.on{background:rgba(255,255,255,.14)}
+ nav .links a.dlb,nav .links .thm{margin-left:0}
+ .thm{width:100%;height:auto;padding:13px 16px;border-radius:14px}
+ .thm .lbl{display:inline;font-size:16px;letter-spacing:.08em}
+}
+
+/* ---- animacion del cambio de tema (revelado circular + icono) ---- */
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+::view-transition-old(root){z-index:1}::view-transition-new(root){z-index:2}
+html.vt body{transition:none!important}
+html.vt .cur{view-transition-name:vtcur}html.vt .dot{view-transition-name:vtdot}
+html.vt #amaky{view-transition-name:vtama}html.vt #amaky-sh{view-transition-name:vtsh}
+::view-transition-group(vtcur),::view-transition-group(vtdot),::view-transition-group(vtama),::view-transition-group(vtsh){animation:none}
+::view-transition-old(vtcur),::view-transition-old(vtdot),::view-transition-old(vtama),::view-transition-old(vtsh){display:none}
+::view-transition-new(vtcur),::view-transition-new(vtdot),::view-transition-new(vtama),::view-transition-new(vtsh){animation:none}
+.thm{position:relative}
+.thm::after{content:"";position:absolute;inset:0;border-radius:50%;background:#a42b34;opacity:0;pointer-events:none}
+.thm.sw::after{animation:thmring .75s ease-out}
+.thm.sw svg{animation:thmspin .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes thmring{0%{opacity:.55;transform:scale(1)}100%{opacity:0;transform:scale(2.6)}}
+@keyframes thmspin{0%{opacity:0;transform:rotate(-120deg) scale(.2)}100%{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.thm.sw::after,.thm.sw svg{animation:none}}
