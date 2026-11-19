@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lector Amatsuka</title>
+<meta name="description" content="Abre, edita y aprueba las plantillas .amatsuka de Amatsuka Creators.">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <img class="brand" src="icons/icon.svg" alt="" width="34" height="34">
+  <h1>Lector Amatsuka</h1>
+  <span class="sp"></span>
+  <label class="btn main" for="fileIn">Abrir .amatsuka</label>
+  <input id="fileIn" type="file" accept=".amatsuka,application/x-amatsuka" multiple hidden>
+  <button class="btn" id="bSave" disabled>Guardar .amatsuka</button>
+  <button class="btn" id="bPng" disabled>Imagen PNG</button>
+  <button class="btn" id="bCopy" disabled>Copiar texto</button>
+  <button class="btn" id="bEst">Estados y respaldo</button>
+  <button class="btn main" id="bInst" hidden>Instalar app</button>
+</header>
+
+<main class="grid">
+  <aside class="panel lib" aria-label="Biblioteca">
+    <h2>Solicitudes</h2>
+    <form id="fCode" autocomplete="off">
+      <input id="inCode" type="text" placeholder="AMA-XXXXX-XXXXX" maxlength="20" spellcheck="false" aria-label="Código de solicitud">
+      <button class="btn main" type="submit">Buscar o crear por código</button>
+    </form>
+    <p class="hint" id="libHint">Escribe el código que te dio la persona, o abre su archivo .amatsuka.</p>
+    <ul id="list" class="list"></ul>
+  </aside>
+
+  <section class="center" aria-label="Plantilla">
+    <div class="prev" id="card">
+      <div class="pbar"><s></s><s></s><s class="r"></s></div>
+      <div class="pbody">
+        <h2 id="cP" class="hint" spellcheck="false">Nombre Del Proyecto</h2>
+        <small id="cN" class="hint" spellcheck="false">tu nombre</small>
+        <p id="cD" class="hint" spellcheck="false">Describe Tu Proyecto</p>
+      </div>
+      <div class="plogo" id="cL"></div>
+    </div>
+    <p class="hint c" id="cardHint">Arrastra aquí un archivo .amatsuka para verlo tal cual lo envió la persona.</p>
+  </section>
+
+  <aside class="panel info" aria-label="Datos y estado">
+    <h2>Estado</h2>
+    <div class="code"><b id="vCode">—</b><button class="btn sm" id="bCode" disabled>Copiar</button></div>
+    <div class="est" id="estB" role="group" aria-label="Estado del proyecto"></div>
+    <label class="lb" for="nota">Mensaje para el cliente (lo verá al consultar su código)</label>
+    <textarea id="nota" rows="3" maxlength="500" placeholder="Ej: Aprobado, te escribimos por Discord para empezar." disabled></textarea>
+    <p class="hint" id="estFecha"></p>
+
+    <h2>Datos</h2>
+    <label class="lb" for="mN">Nombre</label><input id="mN" type="text" disabled>
+    <label class="lb" for="mE">Correo</label><input id="mE" type="text" disabled>
+    <label class="lb" for="mC">Contacto</label><input id="mC" type="text" disabled>
+    <p class="meta" id="mMeta"></p>
+    <button class="btn main wide" id="bMail" disabled>Responder por correo</button>
+  </aside>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" class="dbody">
+    <h2>Estados y respaldo</h2>
+    <p><b>Sin servidor:</b> aquí marcas cada solicitud y exportas <code>estados.json</code>. Lo subes a la carpeta <code>estado/</code> de tu página y la persona lo ve al escribir su código en <code>/estado/</code>. Cada vez que cambies un estado, vuelve a exportarlo y a subirlo.</p>
+    <div class="row"><button type="button" class="btn main" id="bExpEst">Exportar estados.json</button>
+    <label class="btn" for="impEst">Importar estados.json</label><input id="impEst" type="file" accept=".json,application/json" hidden></div>
+    <p>Tus solicitudes se guardan solo en este navegador. Haz un respaldo de vez en cuando.</p>
+    <div class="row"><button type="button" class="btn" id="bExpLib">Guardar respaldo</button>
+    <label class="btn" for="impLib">Cargar respaldo</label><input id="impLib" type="file" accept=".json,application/json" hidden></div>
+    <div class="row end"><button class="btn main">Cerrar</button></div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="amatsuka.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

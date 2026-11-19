@@ -1,0 +1,13 @@
+LECTOR AMATSUKA (app instalable en Chrome)
+
+1) Sube la carpeta "lector" junto con el resto del sitio (necesita https, o localhost para probar).
+2) Abre /lector/ en Chrome -> icono de instalar en la barra de direcciones (o el boton "Instalar app").
+3) Una vez instalada, los archivos .amatsuka se abren con doble clic en la app.
+   (Chrome pregunta la primera vez; funciona en Windows, Mac, Linux y ChromeOS.)
+4) Iconos: reemplaza los PNG de lector/icons/ por tu logo real (mismos nombres y tamanos).
+
+ESTADOS SIN SERVIDOR
+- En el lector pon el estado a cada solicitud (por codigo o abriendo su .amatsuka).
+- "Estados y respaldo" -> Exportar estados.json -> sube ese archivo a la carpeta estado/ (reemplaza el que hay).
+- La persona entra a /estado/, escribe su codigo y ve el estado. Cada cambio requiere volver a exportar y subir.
+- estados.json solo guarda huellas SHA-256 de los codigos, no nombres ni correos.
