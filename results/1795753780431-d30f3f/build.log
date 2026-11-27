@@ -1,0 +1,217 @@
+
+Welcome to Gradle 8.10.2!
+
+Here are the highlights of this release:
+ - Support for Java 23
+ - Faster configuration cache
+ - Better configuration cache reports
+
+For more details see https://docs.gradle.org/8.10.2/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.10.2/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.8.13
+:remapping 50 mods from modImplementation (java-api)
+
+> Task :compileJava
+> Task :processResources
+> Task :classes
+> Task :jar
+> Task :compileTestJava NO-SOURCE
+> Task :processIncludeJars
+> Task :sourcesJar
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :validateAccessWidener NO-SOURCE
+> Task :check UP-TO-DATE
+> Task :remapJar
+> Task :remapSourcesJar
+> Task :assemble
+> Task :build
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1795753824142.json
+
+BUILD SUCCESSFUL in 1m 2s
+7 actionable tasks: 7 executed
+
+===== DIAGNOSTICO =====
+--- Archivos que recibio GitHub ---
+./README.md
+./build.gradle
+./gradle.properties
+./settings.gradle
+./src/main/java/com/bbpm/BBPlayerModelsClient.java
+./src/main/java/com/bbpm/Role.java
+./src/main/java/com/bbpm/mixin/LivingEntityRendererMixin.java
+./src/main/java/com/bbpm/model/BBModel.java
+./src/main/java/com/bbpm/model/ModelLoader.java
+./src/main/java/com/bbpm/model/ModelManager.java
+./src/main/java/com/bbpm/render/BBRenderer.java
+./src/main/java/com/bbpm/screen/ModelScreen.java
+./src/main/resources/assets/bbplayermodels/lang/en_us.json
+./src/main/resources/assets/bbplayermodels/lang/es_es.json
+./src/main/resources/bbplayermodels.mixins.json
+./src/main/resources/fabric.mod.json
+--- build.gradle ---
+plugins {
+    id 'fabric-loom' version '1.8-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base { archivesName = project.archives_base_name }
+
+repositories {}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") { expand "version": project.version }
+}
+
+tasks.withType(JavaCompile).configureEach { it.options.release = 21 }
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+--- Version de Gradle ---
+Gradle 8.10.2
+--- Recursos procesados ---
+build/resources/main/assets/bbplayermodels/lang/en_us.json
+build/resources/main/assets/bbplayermodels/lang/es_es.json
+build/resources/main/bbplayermodels.mixins.json
+build/resources/main/fabric.mod.json
+--- .jar generados ---
+## /tmp/proj/build/devlibs/bbplayermodels-1.0.0-dev.jar
+Archive:  /tmp/proj/build/devlibs/bbplayermodels-1.0.0-dev.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2026-11-27 04:31   META-INF/
+       25  2026-11-27 04:31   META-INF/MANIFEST.MF
+        0  2026-11-27 04:31   com/
+        0  2026-11-27 04:31   com/bbpm/
+     4845  2026-11-27 04:31   com/bbpm/BBPlayerModelsClient.class
+     2542  2026-11-27 04:31   com/bbpm/Role.class
+        0  2026-11-27 04:31   com/bbpm/render/
+      846  2026-11-27 04:31   com/bbpm/render/BBRenderer$1.class
+    11448  2026-11-27 04:31   com/bbpm/render/BBRenderer.class
+      906  2026-11-27 04:31   com/bbpm/render/BBRenderer$Ctx.class
+        0  2026-11-27 04:31   com/bbpm/model/
+      855  2026-11-27 04:31   com/bbpm/model/BBModel$Bone.class
+      744  2026-11-27 04:31   com/bbpm/model/ModelManager$Settings.class
+     1842  2026-11-27 04:31   com/bbpm/model/ModelManager$Active.class
+    26199  2026-11-27 04:31   com/bbpm/model/ModelLoader.class
+      736  2026-11-27 04:31   com/bbpm/model/BBModel$Cube.class
+      681  2026-11-27 04:31   com/bbpm/model/BBModel$Anim.class
+     2374  2026-11-27 04:31   com/bbpm/model/BBModel.class
+      444  2026-11-27 04:31   com/bbpm/model/BBModel$Key.class
+      674  2026-11-27 04:31   com/bbpm/model/BBModel$BoneAnim.class
+      755  2026-11-27 04:31   com/bbpm/model/ModelManager$Config.class
+     8388  2026-11-27 04:31   com/bbpm/model/ModelManager.class
+        0  2026-11-27 04:31   com/bbpm/mixin/
+     3203  2026-11-27 04:31   com/bbpm/mixin/LivingEntityRendererMixin.class
+        0  2026-11-27 04:31   com/bbpm/screen/
+    15831  2026-11-27 04:31   com/bbpm/screen/ModelScreen.class
+      990  2026-11-27 04:31   bbplayermodels-refmap.json
+## /tmp/proj/build/devlibs/bbplayermodels-1.0.0-sources.jar
+Archive:  /tmp/proj/build/devlibs/bbplayermodels-1.0.0-sources.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2026-11-27 04:31   META-INF/
+       25  2026-11-27 04:31   META-INF/MANIFEST.MF
+        0  2026-11-27 04:29   assets/
+        0  2026-11-27 04:29   assets/bbplayermodels/
+        0  2026-11-27 04:29   assets/bbplayermodels/lang/
+       86  2026-11-27 04:29   assets/bbplayermodels/lang/en_us.json
+       86  2026-11-27 04:29   assets/bbplayermodels/lang/es_es.json
+      474  2026-11-27 04:29   fabric.mod.json
+      195  2026-11-27 04:29   bbplayermodels.mixins.json
+        0  2026-11-27 04:29   com/
+        0  2026-11-27 04:29   com/bbpm/
+        0  2026-11-27 04:29   com/bbpm/render/
+     8452  2026-11-27 04:29   com/bbpm/render/BBRenderer.java
+        0  2026-11-27 04:29   com/bbpm/model/
+    20960  2026-11-27 04:29   com/bbpm/model/ModelLoader.java
+     2470  2026-11-27 04:29   com/bbpm/model/BBModel.java
+     5295  2026-11-27 04:29   com/bbpm/model/ModelManager.java
+     1600  2026-11-27 04:29   com/bbpm/BBPlayerModelsClient.java
+        0  2026-11-27 04:29   com/bbpm/mixin/
+     1970  2026-11-27 04:29   com/bbpm/mixin/LivingEntityRendererMixin.java
+     1149  2026-11-27 04:29   com/bbpm/Role.java
+        0  2026-11-27 04:29   com/bbpm/screen/
+    12192  2026-11-27 04:29   com/bbpm/screen/ModelScreen.java
+---------                     -------
+    54954                     23 files
+## /tmp/proj/build/libs/bbplayermodels-1.0.0-sources.jar
+Archive:  /tmp/proj/build/libs/bbplayermodels-1.0.0-sources.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      378  2026-11-27 04:31   META-INF/MANIFEST.MF
+        0  2026-11-27 04:31   com/
+        0  2026-11-27 04:31   com/bbpm/
+        0  2026-11-27 04:31   com/bbpm/render/
+     8384  2026-11-27 04:31   com/bbpm/render/BBRenderer.java
+        0  2026-11-27 04:31   com/bbpm/model/
+    20880  2026-11-27 04:31   com/bbpm/model/ModelLoader.java
+     2474  2026-11-27 04:31   com/bbpm/model/BBModel.java
+     5200  2026-11-27 04:31   com/bbpm/model/ModelManager.java
+     1567  2026-11-27 04:31   com/bbpm/BBPlayerModelsClient.java
+        0  2026-11-27 04:31   com/bbpm/mixin/
+     1775  2026-11-27 04:31   com/bbpm/mixin/LivingEntityRendererMixin.java
+     1149  2026-11-27 04:31   com/bbpm/Role.java
+        0  2026-11-27 04:31   com/bbpm/screen/
+    12527  2026-11-27 04:31   com/bbpm/screen/ModelScreen.java
+        0  2026-11-27 04:31   assets/
+        0  2026-11-27 04:31   assets/bbplayermodels/
+        0  2026-11-27 04:31   assets/bbplayermodels/lang/
+       86  2026-11-27 04:31   assets/bbplayermodels/lang/en_us.json
+       86  2026-11-27 04:31   assets/bbplayermodels/lang/es_es.json
+      474  2026-11-27 04:31   fabric.mod.json
+        0  2026-11-27 04:31   META-INF/
+      195  2026-11-27 04:31   bbplayermodels.mixins.json
+---------                     -------
+    55175                     23 files
+## /tmp/proj/build/libs/bbplayermodels-1.0.0.jar
+Archive:  /tmp/proj/build/libs/bbplayermodels-1.0.0.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      415  1980-01-01 00:00   META-INF/MANIFEST.MF
+        0  1980-01-01 00:00   META-INF/
+        0  1980-01-01 00:00   assets/
+        0  1980-01-01 00:00   assets/bbplayermodels/
+        0  1980-01-01 00:00   assets/bbplayermodels/lang/
+       86  1980-01-01 00:00   assets/bbplayermodels/lang/en_us.json
+       86  1980-01-01 00:00   assets/bbplayermodels/lang/es_es.json
+      990  1980-01-01 00:00   bbplayermodels-refmap.json
+      250  1980-01-01 00:00   bbplayermodels.mixins.json
+        0  1980-01-01 00:00   com/
+        0  1980-01-01 00:00   com/bbpm/
+     4654  1980-01-01 00:00   com/bbpm/BBPlayerModelsClient.class
+     2564  1980-01-01 00:00   com/bbpm/Role.class
+        0  1980-01-01 00:00   com/bbpm/mixin/
+     2926  1980-01-01 00:00   com/bbpm/mixin/LivingEntityRendererMixin.class
+        0  1980-01-01 00:00   com/bbpm/model/
+      681  1980-01-01 00:00   com/bbpm/model/BBModel$Anim.class
+      855  1980-01-01 00:00   com/bbpm/model/BBModel$Bone.class
+      674  1980-01-01 00:00   com/bbpm/model/BBModel$BoneAnim.class
+      736  1980-01-01 00:00   com/bbpm/model/BBModel$Cube.class
+      444  1980-01-01 00:00   com/bbpm/model/BBModel$Key.class
+     2407  1980-01-01 00:00   com/bbpm/model/BBModel.class
+    26363  1980-01-01 00:00   com/bbpm/model/ModelLoader.class
+     1853  1980-01-01 00:00   com/bbpm/model/ModelManager$Active.class
+      755  1980-01-01 00:00   com/bbpm/model/ModelManager$Config.class
+      744  1980-01-01 00:00   com/bbpm/model/ModelManager$Settings.class
+     8229  1980-01-01 00:00   com/bbpm/model/ModelManager.class
+===== FIN DIAGNOSTICO =====
