@@ -98,8 +98,12 @@ jobs:
             (cd /tmp/proj && find . -type f ! -path './.gradle/*' ! -path './build/*' | sort | head -n 150) || true
             echo "--- build.gradle ---"
             cat /tmp/proj/build.gradle /tmp/proj/build.gradle.kts 2>/dev/null || true
+            echo "--- Version de Gradle ---"
+            gradle --version 2>/dev/null | grep "^Gradle" || true
+            echo "--- Recursos procesados ---"
+            (cd /tmp/proj && find build/resources -type f | sort) 2>/dev/null || true
             echo "--- .jar generados ---"
-            find /tmp/proj -name '*.jar' -path '*/build/*' 2>/dev/null | sort | head -n 20 | while read -r j; do
+            find /tmp/proj -name '*.jar' -path '*/build/*' ! -path '*/loom-cache/*' 2>/dev/null | sort | head -n 20 | while read -r j; do
               echo "## $j"
               unzip -l "$j" | head -n 30 || true
             done
