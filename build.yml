@@ -77,7 +77,13 @@ jobs:
           else
             echo "No se llego a compilar. Revisa el paso 'Preparar proyecto' en la pestana Actions." > "$out/build.log"
           fi
-          jar=$(ls /tmp/proj/build/libs/*.jar 2>/dev/null | grep -v -e '-sources.jar' -e '-javadoc.jar' | head -n1 || true)
+          jar=""
+          while IFS= read -r j; do
+            if unzip -l "$j" fabric.mod.json >/dev/null 2>&1; then jar="$j"; break; fi
+          done < <(find /tmp/proj -path '*/build/libs/*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' 2>/dev/null | sort)
+          if [ "$BUILD_OUTCOME" = "success" ] && [ -z "$jar" ]; then
+            echo "error: se compilo, pero ningun .jar tiene fabric.mod.json en la raiz. Revisa que el proyecto sea de Fabric y que el archivo este en src/main/resources/." >> "$out/build.log"
+          fi
           if [ "$BUILD_OUTCOME" = "success" ] && [ -n "$jar" ]; then
             cp "$jar" "$out/mod.jar"
             basename "$jar" > "$out/jar-name.txt"
@@ -85,6 +91,20 @@ jobs:
           else
             echo failed > "$out/status.txt"
           fi
+          {
+            echo
+            echo "===== DIAGNOSTICO ====="
+            echo "--- Archivos que recibio GitHub ---"
+            (cd /tmp/proj && find . -type f ! -path './.gradle/*' ! -path './build/*' | sort | head -n 150) || true
+            echo "--- build.gradle ---"
+            cat /tmp/proj/build.gradle /tmp/proj/build.gradle.kts 2>/dev/null || true
+            echo "--- .jar generados ---"
+            find /tmp/proj -name '*.jar' -path '*/build/*' 2>/dev/null | sort | head -n 20 | while read -r j; do
+              echo "## $j"
+              unzip -l "$j" | head -n 30 || true
+            done
+            echo "===== FIN DIAGNOSTICO ====="
+          } >> "$out/build.log"
           git rm -q --ignore-unmatch "jobs/${JOB_ID}.zip"
           ls -1 results | sort -r | tail -n +6 | while read -r d; do git rm -rqf "results/$d"; done
           git config user.name "fabric-builder"
