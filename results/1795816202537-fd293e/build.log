@@ -6,14 +6,18 @@ Fabric Loom: 1.9.2
 :remapping 50 mods from modImplementation (java-api)
 
 > Task :compileJava
-/tmp/proj/src/main/java/com/morphzuka/render/BBRenderer.java:266: error: incompatible types: boolean cannot be converted to LoopMode
-            if (!st.isEmpty()) Gestures.play(st.get(0), false);
-                                                        ^
-Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
-1 error
+/tmp/proj/src/main/java/com/morphzuka/render/Surface.java:142: error: Capture is not abstract and does not override abstract method vertex(float,float,float) in VertexConsumer
+    private static final class Capture implements VertexConsumer {
+                         ^
+/tmp/proj/src/main/java/com/morphzuka/render/Surface.java:145: error: method does not override or implement a method from a supertype
+        @Override public VertexConsumer vertex(double x, double y, double z) { cur = new float[]{(float) x, (float) y, (float) z, 0f, 0f}; v.add(cur); return this; }
+        ^
+Note: /tmp/proj/src/main/java/com/morphzuka/render/Surface.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+2 errors
 
 > Task :compileJava FAILED
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1795765072779.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1795816234576.json
 
 [Incubating] Problems report is available at: file:///tmp/proj/build/reports/problems/problems-report.html
 
@@ -22,17 +26,21 @@ FAILURE: Build failed with an exception.
 * What went wrong:
 Execution failed for task ':compileJava'.
 > Compilation failed; see the compiler output below.
-  /tmp/proj/src/main/java/com/morphzuka/render/BBRenderer.java:266: error: incompatible types: boolean cannot be converted to LoopMode
-              if (!st.isEmpty()) Gestures.play(st.get(0), false);
-                                                          ^
-  Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
-  1 error
+  /tmp/proj/src/main/java/com/morphzuka/render/Surface.java:142: error: Capture is not abstract and does not override abstract method vertex(float,float,float) in VertexConsumer
+      private static final class Capture implements VertexConsumer {
+                           ^
+  /tmp/proj/src/main/java/com/morphzuka/render/Surface.java:145: error: method does not override or implement a method from a supertype
+          @Override public VertexConsumer vertex(double x, double y, double z) { cur = new float[]{(float) x, (float) y, (float) z, 0f, 0f}; v.add(cur); return this; }
+          ^
+  Note: /tmp/proj/src/main/java/com/morphzuka/render/Surface.java uses or overrides a deprecated API.
+  Note: Recompile with -Xlint:deprecation for details.
+  2 errors
 
 * Try:
 > Check your code and dependencies to fix the compilation error(s)
 > Run with --scan to get full insights.
 
-BUILD FAILED in 14s
+BUILD FAILED in 22s
 1 actionable task: 1 executed
 
 ===== DIAGNOSTICO =====
@@ -42,33 +50,56 @@ BUILD FAILED in 14s
 ./gradle.properties
 ./settings.gradle
 ./src/main/java/com/morphzuka/Gestures.java
+./src/main/java/com/morphzuka/GunItem.java
 ./src/main/java/com/morphzuka/HitboxOverride.java
+./src/main/java/com/morphzuka/HitboxRegistry.java
+./src/main/java/com/morphzuka/MorphZuka.java
 ./src/main/java/com/morphzuka/MorphZukaClient.java
 ./src/main/java/com/morphzuka/MorpherGun.java
+./src/main/java/com/morphzuka/MzServerConfig.java
 ./src/main/java/com/morphzuka/Role.java
 ./src/main/java/com/morphzuka/compat/SvcPlugin.java
 ./src/main/java/com/morphzuka/mixin/CameraMixin.java
 ./src/main/java/com/morphzuka/mixin/LivingEntityRendererMixin.java
+./src/main/java/com/morphzuka/mixin/ModelPartAccessor.java
+./src/main/java/com/morphzuka/mixin/ModelPartMixin.java
 ./src/main/java/com/morphzuka/mixin/PlayerDimensionsMixin.java
 ./src/main/java/com/morphzuka/mixin/PlayerEntityRendererMixin.java
 ./src/main/java/com/morphzuka/model/AnimConfig.java
 ./src/main/java/com/morphzuka/model/AnimIO.java
+./src/main/java/com/morphzuka/model/AnimScan.java
 ./src/main/java/com/morphzuka/model/AnimStates.java
 ./src/main/java/com/morphzuka/model/BBModel.java
+./src/main/java/com/morphzuka/model/CubeXform.java
+./src/main/java/com/morphzuka/model/ModelBounds.java
 ./src/main/java/com/morphzuka/model/ModelImporter.java
 ./src/main/java/com/morphzuka/model/ModelLoader.java
 ./src/main/java/com/morphzuka/model/ModelManager.java
+./src/main/java/com/morphzuka/model/VanillaPlayer.java
+./src/main/java/com/morphzuka/net/ClientNet.java
+./src/main/java/com/morphzuka/net/Payloads.java
+./src/main/java/com/morphzuka/net/ServerNet.java
 ./src/main/java/com/morphzuka/render/BBRenderer.java
+./src/main/java/com/morphzuka/render/CubeSwarm.java
+./src/main/java/com/morphzuka/render/EntityCfg.java
+./src/main/java/com/morphzuka/render/Form.java
+./src/main/java/com/morphzuka/render/Forms.java
 ./src/main/java/com/morphzuka/render/MorphManager.java
+./src/main/java/com/morphzuka/render/PartTree.java
+./src/main/java/com/morphzuka/render/Physics.java
 ./src/main/java/com/morphzuka/render/PreviewSim.java
+./src/main/java/com/morphzuka/render/Surface.java
+./src/main/java/com/morphzuka/render/TexPixels.java
 ./src/main/java/com/morphzuka/render/Transition.java
 ./src/main/java/com/morphzuka/screen/AnimConfigScreen.java
 ./src/main/java/com/morphzuka/screen/EditorScreen.java
+./src/main/java/com/morphzuka/screen/EntityAnimScreen.java
 ./src/main/java/com/morphzuka/screen/ModelScreen.java
 ./src/main/java/com/morphzuka/screen/RadialScreen.java
 ./src/main/java/com/morphzuka/screen/SliderScreen.java
 ./src/main/java/com/morphzuka/ui/Background.java
 ./src/main/java/com/morphzuka/ui/Gfx.java
+./src/main/java/com/morphzuka/ui/MorphPreview.java
 ./src/main/java/com/morphzuka/ui/Theme.java
 ./src/main/java/com/morphzuka/ui/VideoDecoder.java
 ./src/main/java/com/morphzuka/ui/VideoLoader.java
