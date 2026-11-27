@@ -77,7 +77,13 @@ jobs:
           else
             echo "No se llego a compilar. Revisa el paso 'Preparar proyecto' en la pestana Actions." > "$out/build.log"
           fi
-          jar=$(ls /tmp/proj/build/libs/*.jar 2>/dev/null | grep -v -e '-sources.jar' -e '-javadoc.jar' | head -n1 || true)
+          jar=""
+          while IFS= read -r j; do
+            if unzip -l "$j" fabric.mod.json >/dev/null 2>&1; then jar="$j"; break; fi
+          done < <(find /tmp/proj -path '*/build/libs/*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' 2>/dev/null | sort)
+          if [ "$BUILD_OUTCOME" = "success" ] && [ -z "$jar" ]; then
+            echo "error: se compilo, pero ningun .jar tiene fabric.mod.json en la raiz. Revisa que el proyecto sea de Fabric y que el archivo este en src/main/resources/." >> "$out/build.log"
+          fi
           if [ "$BUILD_OUTCOME" = "success" ] && [ -n "$jar" ]; then
             cp "$jar" "$out/mod.jar"
             basename "$jar" > "$out/jar-name.txt"
