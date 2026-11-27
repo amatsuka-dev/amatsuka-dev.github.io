@@ -1,0 +1,632 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.9.2
+:remapping 50 mods from modImplementation (java-api)
+
+> Task :compileJava
+> Task :processResources
+> Task :classes
+> Task :jar
+> Task :compileTestJava NO-SOURCE
+> Task :processIncludeJars
+> Task :sourcesJar
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :validateAccessWidener NO-SOURCE
+> Task :check UP-TO-DATE
+> Task :remapJar
+> Task :remapSourcesJar
+> Task :assemble
+> Task :build
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1795752288865.json
+
+BUILD SUCCESSFUL in 25s
+7 actionable tasks: 7 executed
+
+===== DIAGNOSTICO =====
+--- Archivos que recibio GitHub ---
+./.gitignore
+./LICENSE
+./README.md
+./build.gradle
+./gradle.properties
+./settings.gradle
+./src/main/java/com/ejemplo/bbplayermodels/BBPlayerModels.java
+./src/main/java/com/ejemplo/bbplayermodels/BBPlayerModelsClient.java
+./src/main/java/com/ejemplo/bbplayermodels/mixin/ExampleMixin.java
+./src/main/resources/bbplayermodels.mixins.json
+./src/main/resources/fabric.mod.json
+--- build.gradle ---
+plugins {
+	id 'fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	// Añade aquí repositorios para dependencias extra.
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": inputs.properties.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+	it.options.encoding = "UTF-8"
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+	inputs.property "archivesName", project.base.archivesName
+
+	from("LICENSE") {
+		rename { "${it}_${inputs.properties.archivesName}" }
+	}
+}
+--- .jar generados ---
+## /tmp/proj/build/devlibs/bbplayermodels-1.0.0-dev.jar
+Archive:  /tmp/proj/build/devlibs/bbplayermodels-1.0.0-dev.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2026-11-27 04:05   META-INF/
+       25  2026-11-27 04:05   META-INF/MANIFEST.MF
+        0  2026-11-27 04:05   com/
+        0  2026-11-27 04:05   com/ejemplo/
+        0  2026-11-27 04:05   com/ejemplo/bbplayermodels/
+      462  2026-11-27 04:05   com/ejemplo/bbplayermodels/BBPlayerModelsClient.class
+      823  2026-11-27 04:05   com/ejemplo/bbplayermodels/BBPlayerModels.class
+        0  2026-11-27 04:05   com/ejemplo/bbplayermodels/mixin/
+      866  2026-11-27 04:05   com/ejemplo/bbplayermodels/mixin/ExampleMixin.class
+      350  2026-11-27 04:05   bbplayermodels-refmap.json
+      542  2026-11-27 04:05   fabric.mod.json
+      245  2026-11-27 04:05   bbplayermodels.mixins.json
+     1059  2026-11-27 04:04   LICENSE_bbplayermodels
+---------                     -------
+     4372                     13 files
+## /tmp/proj/build/devlibs/bbplayermodels-1.0.0-sources.jar
+Archive:  /tmp/proj/build/devlibs/bbplayermodels-1.0.0-sources.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2026-11-27 04:05   META-INF/
+       25  2026-11-27 04:05   META-INF/MANIFEST.MF
+      547  2026-11-27 04:04   fabric.mod.json
+      245  2026-11-27 04:04   bbplayermodels.mixins.json
+        0  2026-11-27 04:04   com/
+        0  2026-11-27 04:04   com/ejemplo/
+        0  2026-11-27 04:04   com/ejemplo/bbplayermodels/
+      477  2026-11-27 04:04   com/ejemplo/bbplayermodels/BBPlayerModels.java
+      247  2026-11-27 04:04   com/ejemplo/bbplayermodels/BBPlayerModelsClient.java
+        0  2026-11-27 04:04   com/ejemplo/bbplayermodels/mixin/
+      489  2026-11-27 04:04   com/ejemplo/bbplayermodels/mixin/ExampleMixin.java
+---------                     -------
+     2030                     11 files
+## /tmp/proj/build/libs/bbplayermodels-1.0.0-sources.jar
+Archive:  /tmp/proj/build/libs/bbplayermodels-1.0.0-sources.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      377  2026-11-27 04:05   META-INF/MANIFEST.MF
+        0  2026-11-27 04:05   com/
+        0  2026-11-27 04:05   com/ejemplo/
+        0  2026-11-27 04:05   com/ejemplo/bbplayermodels/
+      477  2026-11-27 04:05   com/ejemplo/bbplayermodels/BBPlayerModels.java
+      247  2026-11-27 04:05   com/ejemplo/bbplayermodels/BBPlayerModelsClient.java
+        0  2026-11-27 04:05   com/ejemplo/bbplayermodels/mixin/
+      489  2026-11-27 04:05   com/ejemplo/bbplayermodels/mixin/ExampleMixin.java
+      547  2026-11-27 04:05   fabric.mod.json
+        0  2026-11-27 04:05   META-INF/
+      245  2026-11-27 04:05   bbplayermodels.mixins.json
+---------                     -------
+     2382                     11 files
+## /tmp/proj/build/libs/bbplayermodels-1.0.0.jar
+Archive:  /tmp/proj/build/libs/bbplayermodels-1.0.0.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      414  1980-01-01 00:00   META-INF/MANIFEST.MF
+     1059  1980-01-01 00:00   LICENSE_bbplayermodels
+        0  1980-01-01 00:00   META-INF/
+      350  1980-01-01 00:00   bbplayermodels-refmap.json
+      286  1980-01-01 00:00   bbplayermodels.mixins.json
+        0  1980-01-01 00:00   com/
+        0  1980-01-01 00:00   com/ejemplo/
+        0  1980-01-01 00:00   com/ejemplo/bbplayermodels/
+      823  1980-01-01 00:00   com/ejemplo/bbplayermodels/BBPlayerModels.class
+      462  1980-01-01 00:00   com/ejemplo/bbplayermodels/BBPlayerModelsClient.class
+        0  1980-01-01 00:00   com/ejemplo/bbplayermodels/mixin/
+      896  1980-01-01 00:00   com/ejemplo/bbplayermodels/mixin/ExampleMixin.class
+      542  1980-01-01 00:00   fabric.mod.json
+---------                     -------
+     4832                     13 files
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-api-0.115.0+1.21.1.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-api-0.115.0+1.21.1.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      478  2026-11-27 04:05   META-INF/MANIFEST.MF
+      705  2026-11-27 04:05   fabric.mod.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric/
+     1579  2026-11-27 04:05   assets/fabric/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-api
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   META-INF/jars/
+    12080  2026-11-27 04:05   META-INF/jars/fabric-transitive-access-wideners-v1-0.115.0.jar
+   202100  2026-11-27 04:05   META-INF/jars/fabric-transfer-api-v1-0.115.0.jar
+    18592  2026-11-27 04:05   META-INF/jars/fabric-sound-api-v1-0.115.0.jar
+    29219  2026-11-27 04:05   META-INF/jars/fabric-screen-handler-api-v1-0.115.0.jar
+    57956  2026-11-27 04:05   META-INF/jars/fabric-screen-api-v1-0.115.0.jar
+   119079  2026-11-27 04:05   META-INF/jars/fabric-resource-loader-v0-0.115.0.jar
+    66775  2026-11-27 04:05   META-INF/jars/fabric-resource-conditions-api-v1-0.115.0.jar
+   104839  2026-11-27 04:05   META-INF/jars/fabric-rendering-v1-0.115.0.jar
+    17219  2026-11-27 04:05   META-INF/jars/fabric-rendering-v0-0.115.0.jar
+    31838  2026-11-27 04:05   META-INF/jars/fabric-rendering-fluids-v1-0.115.0.jar
+    17817  2026-11-27 04:05   META-INF/jars/fabric-rendering-data-attachment-v1-0.115.0.jar
+    19035  2026-11-27 04:05   META-INF/jars/fabric-renderer-registries-v1-0.115.0.jar
+   116386  2026-11-27 04:05   META-INF/jars/fabric-renderer-indigo-0.115.0.jar
+    60048  2026-11-27 04:05   META-INF/jars/fabric-renderer-api-v1-0.115.0.jar
+   131122  2026-11-27 04:05   META-INF/jars/fabric-registry-sync-v0-0.115.0.jar
+    64552  2026-11-27 04:05   META-INF/jars/fabric-recipe-api-v1-0.115.0.jar
+    33231  2026-11-27 04:05   META-INF/jars/fabric-particles-v1-0.115.0.jar
+    92225  2026-11-27 04:05   META-INF/jars/fabric-object-builder-api-v1-0.115.0.jar
+   202885  2026-11-27 04:05   META-INF/jars/fabric-networking-api-v1-0.115.0.jar
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-api-base-0.4.42+6573ed8c19.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-api-base-0.4.42+6573ed8c19.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      478  2026-11-27 04:05   META-INF/MANIFEST.MF
+      653  2026-11-27 04:05   fabric.mod.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-api-base/
+     1579  2026-11-27 04:05   assets/fabric-api-base/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-api-base
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/base/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/base/toposort/
+      368  2026-11-27 04:05   net/fabricmc/fabric/impl/base/toposort/package-info.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/base/event/
+     1653  2026-11-27 04:05   net/fabricmc/fabric/impl/base/event/EventPhaseData.class
+     7022  2026-11-27 04:05   net/fabricmc/fabric/impl/base/event/EventFactoryImpl.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/event/
+      470  2026-11-27 04:05   net/fabricmc/fabric/api/event/AutoInvokingEvent.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/util/
+      827  2026-11-27 04:05   net/fabricmc/fabric/api/util/NbtType.class
+      334  2026-11-27 04:05   net/fabricmc/fabric/api/util/BooleanFunction.class
+     1424  2026-11-27 04:05   net/fabricmc/fabric/impl/base/toposort/SortableNode.class
+     6773  2026-11-27 04:05   net/fabricmc/fabric/impl/base/toposort/NodeSorting.class
+     6407  2026-11-27 04:05   net/fabricmc/fabric/impl/base/event/ArrayBackedEvent.class
+      365  2026-11-27 04:05   net/fabricmc/fabric/impl/base/event/package-info.class
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-api-lookup-api-v1-1.6.70+b559734419.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-api-lookup-api-v1-1.6.70+b559734419.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      478  2026-11-27 04:05   META-INF/MANIFEST.MF
+      902  2026-11-27 04:05   fabric.mod.json
+      277  2026-11-27 04:05   fabric-api-lookup-api-v1.mixins.json
+      316  2026-11-27 04:05   fabric-api-lookup-api-v1-refmap.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-api-lookup-api-v1/
+     1579  2026-11-27 04:05   assets/fabric-api-lookup-api-v1/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-api-lookup-api-v1
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/lookup/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/lookup/v1/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/lookup/v1/block/
+      748  2026-11-27 04:05   net/fabricmc/fabric/api/lookup/v1/block/BlockApiLookup$BlockEntityApiProvider.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/lookup/v1/item/
+      709  2026-11-27 04:05   net/fabricmc/fabric/api/lookup/v1/item/ItemApiLookup$ItemApiProvider.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/lookup/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/lookup/custom/
+     5194  2026-11-27 04:05   net/fabricmc/fabric/impl/lookup/custom/ApiLookupMapImpl.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/lookup/v1/custom/
+      619  2026-11-27 04:05   net/fabricmc/fabric/api/lookup/v1/custom/ApiLookupMap$LookupConstructor.class
+      989  2026-11-27 04:05   net/fabricmc/fabric/api/lookup/v1/block/BlockApiLookup$BlockApiProvider.class
+      582  2026-11-27 04:05   net/fabricmc/fabric/api/lookup/v1/custom/ApiLookupMap$LookupFactory.class
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-biome-api-v1-13.0.31+d527f9fd19.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-biome-api-v1-13.0.31+d527f9fd19.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      478  2026-11-27 04:05   META-INF/MANIFEST.MF
+      828  2026-11-27 04:05   fabric.mod.json
+      534  2026-11-27 04:05   fabric-biome-api-v1.mixins.json
+     4306  2026-11-27 04:05   fabric-biome-api-v1.accesswidener
+     4156  2026-11-27 04:05   fabric-biome-api-v1-refmap.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-biome-api-v1/
+     1579  2026-11-27 04:05   assets/fabric-biome-api-v1/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-biome-api-v1
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/biome/
+     5934  2026-11-27 04:05   net/fabricmc/fabric/impl/biome/TheEndBiomeData.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/biome/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/biome/v1/
+      611  2026-11-27 04:05   net/fabricmc/fabric/api/biome/v1/BiomeModificationContext$WeatherContext.class
+     5848  2026-11-27 04:05   net/fabricmc/fabric/impl/biome/NetherBiomeData.class
+     4698  2026-11-27 04:05   net/fabricmc/fabric/impl/biome/TheEndBiomeData$RegistryKeyHashStrategy.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/biome/
+     2294  2026-11-27 04:05   net/fabricmc/fabric/mixin/biome/NetherBiomePresetMixin.class
+     1878  2026-11-27 04:05   net/fabricmc/fabric/mixin/biome/BiomeSourceMixin.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/biome/modification/
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-block-api-v1-1.0.22+0af3f5a719.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-block-api-v1-1.0.22+0af3f5a719.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      478  2026-11-27 04:05   META-INF/MANIFEST.MF
+      959  2026-11-27 04:05   fabric.mod.json
+      324  2026-11-27 04:05   fabric-block-api-v1.mixins.json
+     1630  2026-11-27 04:05   fabric-block-api-v1-refmap.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-block-api-v1/
+     1579  2026-11-27 04:05   assets/fabric-block-api-v1/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-block-api-v1
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/block/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/block/v1/
+     1407  2026-11-27 04:05   net/fabricmc/fabric/api/block/v1/FabricBlockState.class
+     1034  2026-11-27 04:05   net/fabricmc/fabric/api/block/v1/FabricBlock.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/block/
+      497  2026-11-27 04:05   net/fabricmc/fabric/mixin/block/BlockMixin.class
+      361  2026-11-27 04:05   net/fabricmc/fabric/mixin/block/package-info.class
+     1270  2026-11-27 04:05   net/fabricmc/fabric/mixin/block/ChunkSectionMixin.class
+      522  2026-11-27 04:05   net/fabricmc/fabric/mixin/block/BlockStateMixin.class
+     1306  2026-11-27 04:05   net/fabricmc/fabric/mixin/block/ChunkSectionBlockStateCounterMixin.class
+---------                     -------
+    22724                     24 files
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-block-view-api-v2-1.0.10+6573ed8c19.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-block-view-api-v2-1.0.10+6573ed8c19.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      931  2026-11-27 04:05   META-INF/MANIFEST.MF
+     1146  2026-11-27 04:05   fabric.mod.json
+      271  2026-11-27 04:05   fabric-block-view-api-v2.mixins.json
+      310  2026-11-27 04:05   fabric-block-view-api-v2.client.mixins.json
+      113  2026-11-27 04:05   fabric-block-view-api-v2.accesswidener
+       34  2026-11-27 04:05   fabric-block-view-api-v2-refmap.json
+      996  2026-11-27 04:05   client-fabric-block-view-api-v2-refmap.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-block-view-api-v2/
+     1579  2026-11-27 04:05   assets/fabric-block-view-api-v2/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-block-view-api-v2
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/blockview/
+      550  2026-11-27 04:05   net/fabricmc/fabric/mixin/blockview/BlockEntityMixin.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/blockview/client/
+      498  2026-11-27 04:05   net/fabricmc/fabric/mixin/blockview/client/package-info.class
+      335  2026-11-27 04:05   net/fabricmc/fabric/mixin/blockview/BlockViewMixin.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/blockview/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/blockview/client/
+      497  2026-11-27 04:05   net/fabricmc/fabric/impl/blockview/client/package-info.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/blockview/
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-blockrenderlayer-v1-1.1.52+0af3f5a719.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-blockrenderlayer-v1-1.1.52+0af3f5a719.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+     1009  2026-11-27 04:05   META-INF/MANIFEST.MF
+      857  2026-11-27 04:05   fabric.mod.json
+      266  2026-11-27 04:05   fabric-blockrenderlayer-v1.mixins.json
+      350  2026-11-27 04:05   client-fabric-blockrenderlayer-v1-refmap.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-blockrenderlayer-v1/
+     1579  2026-11-27 04:05   assets/fabric-blockrenderlayer-v1/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-blockrenderlayer-v1
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/blockrenderlayer/
+     6445  2026-11-27 04:05   net/fabricmc/fabric/impl/blockrenderlayer/BlockRenderLayerMapImpl.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/blockrenderlayer/
+     2519  2026-11-27 04:05   net/fabricmc/fabric/mixin/blockrenderlayer/RenderLayersMixin.class
+      497  2026-11-27 04:05   net/fabricmc/fabric/impl/blockrenderlayer/package-info.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/blockrenderlayer/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/blockrenderlayer/v1/
+     1227  2026-11-27 04:05   net/fabricmc/fabric/api/blockrenderlayer/v1/BlockRenderLayerMap.class
+      498  2026-11-27 04:05   net/fabricmc/fabric/mixin/blockrenderlayer/package-info.class
+---------                     -------
+    26604                     24 files
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-client-tags-api-v1-1.1.15+6573ed8c19.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-client-tags-api-v1-1.1.15+6573ed8c19.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      943  2026-11-27 04:05   META-INF/MANIFEST.MF
+      684  2026-11-27 04:05   fabric.mod.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-client-tags-api-v1/
+     1579  2026-11-27 04:05   assets/fabric-client-tags-api-v1/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-client-tags-api-v1
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/client/
+     2685  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/client/ClientTagsLoader$LoadedTag.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/tag/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/tag/client/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/tag/client/v1/
+     4328  2026-11-27 04:05   net/fabricmc/fabric/api/tag/client/v1/ClientTags.class
+     7782  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/client/ClientTagsLoader.class
+     6861  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/client/ClientTagsImpl.class
+      491  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/client/package-info.class
+     2670  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/client/ClientTagsLoader$1.class
+---------                     -------
+    39380                     23 files
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-command-api-v1-1.2.49+f71b366f19.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-command-api-v1-1.2.49+f71b366f19.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      478  2026-11-27 04:05   META-INF/MANIFEST.MF
+      826  2026-11-27 04:05   fabric.mod.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-command-api-v1/
+     1579  2026-11-27 04:05   assets/fabric-command-api-v1/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-command-api-v1
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/command/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/command/v1/
+      365  2026-11-27 04:05   net/fabricmc/fabric/impl/command/v1/package-info.class
+     2247  2026-11-27 04:05   net/fabricmc/fabric/impl/command/v1/LegacyHandler.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/command/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/command/v1/
+     2289  2026-11-27 04:05   net/fabricmc/fabric/api/command/v1/CommandRegistrationCallback.class
+---------                     -------
+    19141                     19 files
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-command-api-v2-2.2.28+6ced4dd919.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-command-api-v2-2.2.28+6ced4dd919.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+     1148  2026-11-27 04:05   META-INF/MANIFEST.MF
+     1103  2026-11-27 04:05   fabric.mod.json
+      373  2026-11-27 04:05   fabric-command-api-v2.mixins.json
+      303  2026-11-27 04:05   fabric-command-api-v2.client.mixins.json
+      240  2026-11-27 04:05   fabric-command-api-v2.accesswidener
+     1508  2026-11-27 04:05   fabric-command-api-v2-refmap.json
+      962  2026-11-27 04:05   client-fabric-command-api-v2-refmap.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-command-api-v2/
+     1579  2026-11-27 04:05   assets/fabric-command-api-v2/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-command-api-v2
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/command/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/command/v2/
+      768  2026-11-27 04:05   net/fabricmc/fabric/api/command/v2/FabricEntitySelectorReader.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/command/
+      646  2026-11-27 04:05   net/fabricmc/fabric/mixin/command/HelpCommandAccessor.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/client/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/client/command/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/client/command/v2/
+     1371  2026-11-27 04:05   net/fabricmc/fabric/api/client/command/v2/FabricClientCommandSource.class
+     2223  2026-11-27 04:05   net/fabricmc/fabric/mixin/command/CommandManagerMixin.class
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-commands-v0-0.2.66+df3654b319.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-commands-v0-0.2.66+df3654b319.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      478  2026-11-27 04:05   META-INF/MANIFEST.MF
+      731  2026-11-27 04:05   fabric.mod.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-commands-v0/
+     1579  2026-11-27 04:05   assets/fabric-commands-v0/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-commands-v0
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/registry/
+     2801  2026-11-27 04:05   net/fabricmc/fabric/api/registry/CommandRegistry.class
+---------                     -------
+    16946                     13 files
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-content-registries-v0-8.0.18+b559734419.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-content-registries-v0-8.0.18+b559734419.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      478  2026-11-27 04:05   META-INF/MANIFEST.MF
+     1117  2026-11-27 04:05   fabric.mod.json
+      608  2026-11-27 04:05   fabric-content-registries-v0.mixins.json
+      494  2026-11-27 04:05   fabric-content-registries-v0.accesswidener
+     6152  2026-11-27 04:05   fabric-content-registries-v0-refmap.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-content-registries-v0/
+     1579  2026-11-27 04:05   assets/fabric-content-registries-v0/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-content-registries-v0
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/registry/
+      595  2026-11-27 04:05   net/fabricmc/fabric/api/registry/CompostingChanceRegistry.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/content/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/content/registry/
+     1448  2026-11-27 04:05   net/fabricmc/fabric/mixin/content/registry/VillagerEntityAccessor.class
+     1109  2026-11-27 04:05   net/fabricmc/fabric/mixin/content/registry/FarmerWorkTaskAccessor.class
+     1518  2026-11-27 04:05   net/fabricmc/fabric/api/registry/FlattenableBlockRegistry.class
+     5364  2026-11-27 04:05   net/fabricmc/fabric/api/registry/LandPathNodeTypesRegistry.class
+      796  2026-11-27 04:05   net/fabricmc/fabric/mixin/content/registry/GiveGiftsToHeroTaskAccessor.class
+      372  2026-11-27 04:05   net/fabricmc/fabric/mixin/content/registry/package-info.class
+     1607  2026-11-27 04:05   net/fabricmc/fabric/mixin/content/registry/OxidizableMixin.class
+     1156  2026-11-27 04:05   net/fabricmc/fabric/mixin/content/registry/AxeItemAccessor.class
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-convention-tags-v1-2.1.2+7f945d5b19.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-convention-tags-v1-2.1.2+7f945d5b19.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      478  2026-11-27 04:05   META-INF/MANIFEST.MF
+      838  2026-11-27 04:05   fabric.mod.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-convention-tags-v1/
+     1579  2026-11-27 04:05   assets/fabric-convention-tags-v1/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-convention-tags-v1
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/tag/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/tag/convention/
+        0  2026-11-27 04:05   net/fabricmc/fabric/api/tag/convention/v1/
+     2788  2026-11-27 04:05   net/fabricmc/fabric/api/tag/convention/v1/ConventionalBlockTags.class
+     1535  2026-11-27 04:05   net/fabricmc/fabric/api/tag/convention/v1/TagUtil.class
+     6739  2026-11-27 04:05   net/fabricmc/fabric/api/tag/convention/v1/ConventionalItemTags.class
+     1322  2026-11-27 04:05   net/fabricmc/fabric/api/tag/convention/v1/ConventionalFluidTags.class
+     4414  2026-11-27 04:05   net/fabricmc/fabric/api/tag/convention/v1/ConventionalBiomeTags.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/convention/
+      369  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/convention/package-info.class
+     1318  2026-11-27 04:05   net/fabricmc/fabric/api/tag/convention/v1/ConventionalEntityTypeTags.class
+    17831  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/convention/ConventionLogWarnings.class
+     2909  2026-11-27 04:05   net/fabricmc/fabric/impl/tag/convention/TagRegistration.class
+     1594  2026-11-27 04:05   net/fabricmc/fabric/api/tag/convention/v1/ConventionalEnchantmentTags.class
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-convention-tags-v2-2.9.2+e60e56d419.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-convention-tags-v2-2.9.2+e60e56d419.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      478  2026-11-27 04:05   META-INF/MANIFEST.MF
+     1122  2026-11-27 04:05   fabric.mod.json
+       34  2026-11-27 04:05   fabric-convention-tags-v2-refmap.json
+      239  2026-11-27 04:05   fabric-convention-tags-api-v2.mixins.json
+        0  2026-11-27 04:05   data/
+        0  2026-11-27 04:05   data/c/
+        0  2026-11-27 04:05   data/c/tags/
+        0  2026-11-27 04:05   data/c/tags/worldgen/
+        0  2026-11-27 04:05   data/c/tags/worldgen/structure/
+       18  2026-11-27 04:05   data/c/tags/worldgen/structure/hidden_from_locator_selection.json
+       18  2026-11-27 04:05   data/c/tags/worldgen/structure/hidden_from_displayers.json
+        0  2026-11-27 04:05   data/c/tags/worldgen/biome/
+       80  2026-11-27 04:05   data/c/tags/worldgen/biome/no_default_monsters.json
+      164  2026-11-27 04:05   data/c/tags/worldgen/biome/is_windswept.json
+        0  2026-11-27 04:05   data/c/tags/worldgen/biome/is_wet/
+      312  2026-11-27 04:05   data/c/tags/worldgen/biome/is_wet/overworld.json
+       47  2026-11-27 04:05   data/c/tags/worldgen/biome/is_wet.json
+       18  2026-11-27 04:05   data/c/tags/worldgen/biome/is_wasteland.json
+       46  2026-11-27 04:05   data/c/tags/worldgen/biome/is_void.json
+       83  2026-11-27 04:05   data/c/tags/worldgen/biome/is_underground.json
+        0  2026-11-27 04:05   data/c/tags/worldgen/biome/is_tree/
+      154  2026-11-27 04:05   data/c/tags/worldgen/biome/is_tree/savanna.json
+      152  2026-11-27 04:05   data/c/tags/worldgen/biome/is_tree/jungle.json
+      279  2026-11-27 04:05   data/c/tags/worldgen/biome/is_tree/deciduous.json
+      178  2026-11-27 04:05   data/c/tags/worldgen/biome/is_tree/coniferous.json
+        0  2026-11-27 04:05   data/c/tags/worldgen/biome/is_temperate/
+      385  2026-11-27 04:05   data/c/tags/worldgen/biome/is_temperate/overworld.json
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-crash-report-info-v1-0.2.29+0af3f5a719.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-crash-report-info-v1-0.2.29+0af3f5a719.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      478  2026-11-27 04:05   META-INF/MANIFEST.MF
+      757  2026-11-27 04:05   fabric.mod.json
+      262  2026-11-27 04:05   fabric-crash-report-info-v1.mixins.json
+      344  2026-11-27 04:05   fabric-crash-report-info-v1-refmap.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-crash-report-info-v1/
+     1579  2026-11-27 04:05   assets/fabric-crash-report-info-v1/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-crash-report-info-v1
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/crash/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/crash/report/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/crash/report/info/
+      373  2026-11-27 04:05   net/fabricmc/fabric/mixin/crash/report/info/package-info.class
+     4385  2026-11-27 04:05   net/fabricmc/fabric/mixin/crash/report/info/SystemDetailsMixin.class
+---------                     -------
+    19535                     18 files
+## /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-data-attachment-api-v1-1.4.1+9ed317f519.jar
+Archive:  /tmp/proj/build/loom-cache/remapped_working/net_fabricmc_yarn_1_21_1_1_21_1_build_3_v2.net.fabricmc.fabric-api-fabric-data-attachment-api-v1-1.4.1+9ed317f519.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      865  2026-11-27 04:05   META-INF/MANIFEST.MF
+     1755  2026-11-27 04:05   fabric.mod.json
+      624  2026-11-27 04:05   fabric-data-attachment-api-v1.mixins.json
+      282  2026-11-27 04:05   fabric-data-attachment-api-v1.client.mixins.json
+     7672  2026-11-27 04:05   fabric-data-attachment-api-v1-refmap.json
+      668  2026-11-27 04:05   client-fabric-data-attachment-api-v1-refmap.json
+        0  2026-11-27 04:05   assets/
+        0  2026-11-27 04:05   assets/fabric-data-attachment-api-v1/
+     1579  2026-11-27 04:05   assets/fabric-data-attachment-api-v1/icon.png
+    11357  2026-11-27 04:05   LICENSE-fabric-data-attachment-api-v1
+        0  2026-11-27 04:05   META-INF/
+        0  2026-11-27 04:05   net/
+        0  2026-11-27 04:05   net/fabricmc/
+        0  2026-11-27 04:05   net/fabricmc/fabric/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/attachment/
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/attachment/sync/
+     2809  2026-11-27 04:05   net/fabricmc/fabric/impl/attachment/sync/AttachmentTargetInfo.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/impl/attachment/client/
+      498  2026-11-27 04:05   net/fabricmc/fabric/impl/attachment/client/package-info.class
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/
+        0  2026-11-27 04:05   net/fabricmc/fabric/mixin/attachment/
+     6197  2026-11-27 04:05   net/fabricmc/fabric/mixin/attachment/WorldChunkMixin.class
+     4023  2026-11-27 04:05   net/fabricmc/fabric/impl/attachment/sync/AttachmentTargetInfo$BlockEntityTarget.class
+      366  2026-11-27 04:05   net/fabricmc/fabric/mixin/attachment/package-info.class
+    11558  2026-11-27 04:05   net/fabricmc/fabric/impl/attachment/sync/AttachmentChange.class
+     9370  2026-11-27 04:05   net/fabricmc/fabric/mixin/attachment/AttachmentTargetsMixin.class
+===== FIN DIAGNOSTICO =====
