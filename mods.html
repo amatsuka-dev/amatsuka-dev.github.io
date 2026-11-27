@@ -19,7 +19,7 @@
           edge: '#22333a',
           ink: '#dce8ea',
           mute: '#84989e',
-          accent: '#00ffe6',
+          accent: '#ff3b3b',
           bad: '#ff6b6b',
           warn: '#ffc857'
         },
@@ -50,15 +50,15 @@
 </style>
 <style>
   html { color-scheme: dark; }
-  .drop:focus-within, .drop.over { border-color: #00ffe6; background: rgba(0,255,230,.05); color: #dce8ea; }
+  .drop:focus-within, .drop.over { border-color: #ff3b3b; background: rgba(255,59,59,.05); color: #dce8ea; }
   .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "n x" "p p"; gap: .5rem; align-items: center; }
   .row > .n { grid-area: n; } .row > .p { grid-area: p; } .row > .x { grid-area: x; }
   @media (min-width: 768px) {
     .row { grid-template-columns: minmax(0, 13rem) minmax(0, 1fr) auto; grid-template-areas: "n p x"; }
   }
   .console {
-    border: 1px solid rgba(0,255,230,.28);
-    box-shadow: 0 0 0 1px rgba(0,255,230,.08), 0 0 48px -14px rgba(0,255,230,.35);
+    border: 1px solid rgba(255,59,59,.28);
+    box-shadow: 0 0 0 1px rgba(255,59,59,.08), 0 0 48px -14px rgba(255,59,59,.35);
   }
   .dot-run { animation: pulse 1.2s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: .25; } }
@@ -88,7 +88,7 @@
         <input id="gh_token" type="password" class="field font-mono" placeholder="github_pat_…" autocomplete="off"></div>
     </div>
     <label class="mt-3 flex items-center gap-2 text-sm text-mute">
-      <input id="gh_remember" type="checkbox" class="accent-[#00ffe6]"> Recordar el token en este navegador
+      <input id="gh_remember" type="checkbox" class="accent-[#ff3b3b]"> Recordar el token en este navegador
     </label>
     <div class="mt-4 flex flex-wrap items-center gap-3">
       <button id="ghTest" type="button" class="btn btn-ghost">Probar conexión</button>
@@ -179,13 +179,13 @@
             </select></div>
         </div>
         <div class="mt-4 grid gap-3 sm:grid-cols-2">
-          <label class="chk"><input id="tpl_client" type="checkbox" class="mt-1 accent-[#00ffe6]" checked>
+          <label class="chk"><input id="tpl_client" type="checkbox" class="mt-1 accent-[#ff3b3b]" checked>
             <span>Clase de cliente<small>Entrypoint ClientModInitializer</small></span></label>
-          <label class="chk"><input id="tpl_split" type="checkbox" class="mt-1 accent-[#00ffe6]">
+          <label class="chk"><input id="tpl_split" type="checkbox" class="mt-1 accent-[#ff3b3b]">
             <span>Separar código de cliente<small>Carpetas src/main y src/client</small></span></label>
-          <label class="chk"><input id="tpl_mixins" type="checkbox" class="mt-1 accent-[#00ffe6]" checked>
+          <label class="chk"><input id="tpl_mixins" type="checkbox" class="mt-1 accent-[#ff3b3b]" checked>
             <span>Mixins de ejemplo<small>Archivo .mixins.json y una clase</small></span></label>
-          <label class="chk"><input id="tpl_datagen" type="checkbox" class="mt-1 accent-[#00ffe6]">
+          <label class="chk"><input id="tpl_datagen" type="checkbox" class="mt-1 accent-[#ff3b3b]">
             <span>Generación de datos<small>Entrypoint fabric-datagen</small></span></label>
         </div>
         <div class="mt-4 flex flex-wrap items-center gap-3">
@@ -386,6 +386,20 @@ jobs:
           else
             echo failed > "$out/status.txt"
           fi
+          {
+            echo
+            echo "===== DIAGNOSTICO ====="
+            echo "--- Archivos que recibio GitHub ---"
+            (cd /tmp/proj && find . -type f ! -path './.gradle/*' ! -path './build/*' | sort | head -n 150) || true
+            echo "--- build.gradle ---"
+            cat /tmp/proj/build.gradle /tmp/proj/build.gradle.kts 2>/dev/null || true
+            echo "--- .jar generados ---"
+            find /tmp/proj -name '*.jar' -path '*/build/*' 2>/dev/null | sort | head -n 20 | while read -r j; do
+              echo "## $j"
+              unzip -l "$j" | head -n 30 || true
+            done
+            echo "===== FIN DIAGNOSTICO ====="
+          } >> "$out/build.log"
           git rm -q --ignore-unmatch "jobs/${JOB_ID}.zip"
           ls -1 results | sort -r | tail -n +6 | while read -r d; do git rm -rqf "results/$d"; done
           git config user.name "fabric-builder"
