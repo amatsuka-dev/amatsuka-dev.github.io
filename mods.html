@@ -122,6 +122,15 @@
         <div id="projInfo" class="mt-1 hidden rounded-lg border border-accent/30 p-4 text-sm" aria-live="polite"></div>
       </section>
 
+      <section id="explorer" class="panel hidden" aria-labelledby="h-exp">
+        <h2 id="h-exp">Comandos y archivos del .zip</h2>
+        <ul id="cmdList" class="space-y-1 text-sm"></ul>
+        <p class="note">Detección automática sobre el .zip original: puede omitir comandos creados de otra forma, y un subcomando aparece como una palabra suelta.</p>
+        <label class="lbl mt-4" for="fileSel">Ver un archivo</label>
+        <select id="fileSel" class="field font-mono text-xs"></select>
+        <pre id="fileView" class="field mt-2 max-h-96 overflow-auto whitespace-pre font-mono text-xs"></pre>
+      </section>
+
       <section class="panel" aria-labelledby="h-mod">
         <h2 id="h-mod">Datos del mod</h2>
         <div class="grid gap-4 sm:grid-cols-2">
@@ -161,7 +170,7 @@
         </details>
       </section>
 
-      <section class="panel" aria-labelledby="h-tpl">
+      <section hidden class="panel" aria-labelledby="h-tpl">
         <h2 id="h-tpl">Generador de plantilla</h2>
         <p class="mb-4 text-sm text-mute">Crea un proyecto de mod listo para compilar, como el de fabricmc.net/develop/template. Usa los datos de «Datos del mod» (id, nombre, versiones y mappings) y añade lo que falta.</p>
         <div class="grid gap-4 sm:grid-cols-2">
@@ -743,6 +752,44 @@ function findRoot(names) {
   return { root: '', gradle: false };
 }
 
+function detectCommands(sources) {
+  const found = new Set();
+  for (const src of sources) {
+    const code = src.replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, '');
+    const bare = /import\s+static\s+[\w.]*(CommandManager|Commands)\.(literal|\*)\s*;/.test(code);
+    for (const m of code.matchAll(/(?:\b(\w+)\s*\.\s*)?\bliteral\s*\(\s*"([^"]+)"/g)) {
+      if (/^(ClientCommandManager|ClientCommands|CommandManager|Commands)$/.test(m[1] || '') || (!m[1] && bare)) found.add('Comando en el juego: /' + m[2]);
+    }
+    for (const m of code.matchAll(/new\s+Key(?:Binding|Mapping)\s*\(\s*"([^"]+)"[^;]*?GLFW_KEY_(\w+)/g)) found.add(`Tecla por defecto: ${m[2]} (${m[1]})`);
+  }
+  return [...found];
+}
+async function showExplorer(entries) {
+  const javas = await Promise.all(entries.filter((x) => /\.java$/.test(x.rel)).map((x) => x.e.async('string')));
+  const found = detectCommands(javas);
+  const deps = [];
+  const mj = entries.find((x) => /(^|\/)fabric\.mod\.json$/.test(x.rel));
+  if (mj) {
+    try { for (const [k, v] of Object.entries(JSON.parse(await mj.e.async('string')).depends || {})) deps.push(`Requiere: ${k} ${[].concat(v).join(' o ')}`); } catch {}
+  }
+  const rows = [...(found.length ? found : ['No se detectaron comandos ni teclas en el código.']), ...deps,
+    'Para compilar en tu PC (opcional): gradle build'];
+  $('cmdList').replaceChildren(...rows.map((t) => h('li', { class: 'font-mono text-xs', text: t })));
+  const sel = $('fileSel');
+  sel.replaceChildren(...entries.map((x, i) => h('option', { value: String(i), text: x.rel })));
+  const open = async () => {
+    const x = entries[+sel.value];
+    if (!/\.(java|kt|json|json5|gradle|kts|properties|md|txt|toml|ya?ml|lang|mcmeta|accesswidener)$|(^|\/)(LICENSE|\.gitignore)$/i.test(x.rel)) {
+      $('fileView').textContent = 'Este archivo no es de texto y no se puede mostrar aquí.';
+      return;
+    }
+    $('fileView').textContent = await x.e.async('string');
+  };
+  sel.onchange = open;
+  await open();
+  $('explorer').classList.remove('hidden');
+}
+
 function showProj(lines) {
   const box = $('projInfo');
   box.replaceChildren(
@@ -753,6 +800,7 @@ function showProj(lines) {
   box.classList.remove('hidden');
 }
 function clearProject() {
+  $('explorer').classList.add('hidden');
   state.project = null; state.pres = []; state.java = []; state.libs = []; state.res = []; state.zips = [];
   $('projInfo').classList.add('hidden');
   $('noteProj').textContent = '';
@@ -775,6 +823,12 @@ async function loadProjectZip(file) {
   const txt = async (rel) => { const f = zip.file(root + rel); return f ? f.async('string') : null; };
 
   clearProject();
+  for (const x of inRoot.filter((y) => /\.java$/.test(y.rel))) {
+    if (/LOGGER\.info\("Hola desde /.test(await x.e.async('string'))) {
+      note.textContent = 'Este .zip es la plantilla de ejemplo, no tu mod. No se cargó. Sube el .zip con tu código.';
+      return;
+    }
+  }
   const props = propsOf((await txt('gradle.properties')) || '');
   const set = (id, v) => { if (v != null && String(v).trim() !== '') $(id).value = String(v).trim(); };
 
@@ -833,6 +887,7 @@ async function loadProjectZip(file) {
       'Se compilará con los archivos de build del propio proyecto. Los .java y el fabric.mod.json de abajo se pueden editar; las secciones de recursos y librerías se ignoran.'
     ]);
     note.textContent = '';
+    await showExplorer(inRoot);
     return;
   }
 
@@ -860,6 +915,7 @@ async function loadProjectZip(file) {
     `${javaItems.length} archivos .java, ${nRes} recursos, ${state.libs.length} librerías${$('modJson').value.trim() ? ', fabric.mod.json encontrado' : ', sin fabric.mod.json (se autogenerará)'}.`,
     'Revisa los datos del mod abajo: si el .zip no traía versiones, tendrás que completarlas.'
   ]);
+  await showExplorer(inRoot);
   note.textContent = '';
 }
 wireDrop('dropProj', 'inProj', (items) => {
@@ -1082,6 +1138,7 @@ function tplBuild() {
 function tplUse() {
   try {
     const t = tplBuild();
+    if (state.project && state.project.name !== 'plantilla' && !confirm(`La plantilla es un mod de ejemplo y reemplazará tu proyecto ${state.project.name}. ¿Continuar?`)) return;
     clearProject();
     state.project = {
       files: t.files.map((f) => ({ path: f.path, blob: new Blob([f.text], { type: 'text/plain' }) })),
@@ -1382,6 +1439,8 @@ async function compile() {
     };
 
     addLine('Empaquetando el proyecto…', 'info');
+    addLine(`Origen: ${state.project ? state.project.name : 'archivos de las secciones'}`, 'info');
+    for (const j of state.java) addLine(`  incluye ${j.dir}${j.file.name}`, 'info');
     const zip = new JSZip();
     let gradleVer = val('gradle_version') || '8.12.1';
     if (state.project) {
