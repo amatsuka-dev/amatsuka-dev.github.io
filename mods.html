@@ -44,6 +44,8 @@
     .drop strong { @apply font-medium text-ink; }
     .note { @apply mt-2 min-h-[1.25rem] text-xs text-mute; }
     .rm { @apply rounded-md px-2 py-1 text-mute hover:bg-bad/10 hover:text-bad focus-visible:outline focus-visible:outline-2 focus-visible:outline-bad; }
+    .chk { @apply flex items-start gap-2 rounded-lg border border-edge px-3 py-2 text-sm text-ink; }
+    .chk small { @apply block text-xs text-mute; }
   }
 </style>
 <style>
@@ -71,7 +73,7 @@
   <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">Compilador de mods <span class="text-accent">Fabric</span></h1>
-      <p class="mt-1 text-sm text-mute">Sube tu código, se compila en GitHub Actions y descargas el .jar. No instalas nada en tu PC.</p>
+      <p class="mt-1 text-sm text-mute">Genera la plantilla, sube tu código, se compila en GitHub Actions y descargas el .jar. No instalas nada en tu PC.</p>
     </div>
     <div id="health" class="rounded-full border border-edge px-3 py-1 text-xs text-mute">Sin conectar</div>
   </header>
@@ -157,6 +159,40 @@
               <input id="gradle_version" class="field font-mono" value="8.12.1" autocomplete="off" spellcheck="false"></div>
           </div>
         </details>
+      </section>
+
+      <section class="panel" aria-labelledby="h-tpl">
+        <h2 id="h-tpl">Generador de plantilla</h2>
+        <p class="mb-4 text-sm text-mute">Crea un proyecto de mod listo para compilar, como el de fabricmc.net/develop/template. Usa los datos de «Datos del mod» (id, nombre, versiones y mappings) y añade lo que falta.</p>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div><label class="lbl" for="tpl_group">Paquete base (maven_group)</label>
+            <input id="tpl_group" class="field font-mono" value="com.ejemplo" autocomplete="off" spellcheck="false"></div>
+          <div><label class="lbl" for="tpl_author">Autor</label>
+            <input id="tpl_author" class="field" placeholder="Tu nombre" autocomplete="off"></div>
+          <div class="sm:col-span-2"><label class="lbl" for="tpl_desc">Descripción</label>
+            <input id="tpl_desc" class="field" placeholder="Qué hace tu mod" autocomplete="off"></div>
+          <div><label class="lbl" for="tpl_license">Licencia</label>
+            <select id="tpl_license" class="field">
+              <option value="MIT">MIT</option>
+              <option value="CC0-1.0">CC0-1.0 (dominio público)</option>
+              <option value="All-Rights-Reserved">Todos los derechos reservados</option>
+            </select></div>
+        </div>
+        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+          <label class="chk"><input id="tpl_client" type="checkbox" class="mt-1 accent-[#00ffe6]" checked>
+            <span>Clase de cliente<small>Entrypoint ClientModInitializer</small></span></label>
+          <label class="chk"><input id="tpl_split" type="checkbox" class="mt-1 accent-[#00ffe6]">
+            <span>Separar código de cliente<small>Carpetas src/main y src/client</small></span></label>
+          <label class="chk"><input id="tpl_mixins" type="checkbox" class="mt-1 accent-[#00ffe6]" checked>
+            <span>Mixins de ejemplo<small>Archivo .mixins.json y una clase</small></span></label>
+          <label class="chk"><input id="tpl_datagen" type="checkbox" class="mt-1 accent-[#00ffe6]">
+            <span>Generación de datos<small>Entrypoint fabric-datagen</small></span></label>
+        </div>
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <button id="tplUse" type="button" class="btn btn-primary">Usar en el compilador</button>
+          <button id="tplDownload" type="button" class="btn btn-ghost">Descargar plantilla (.zip)</button>
+        </div>
+        <p id="tplMsg" class="note" aria-live="polite"></p>
       </section>
 
       <section class="panel" aria-labelledby="h-java">
@@ -371,7 +407,8 @@ const h = (tag, props = {}, ...kids) => {
 
 const state = { java: [], res: [], zips: [], libs: [], pres: [], project: null, jobId: null, es: null, busy: false };
 const FORM_IDS = ['mod_id', 'mod_name', 'version', 'minecraft_version', 'fabric_loader_version', 'fabric_api_version',
-  'mappings', 'yarn_mappings', 'loom_version', 'java_version', 'gradle_version', 'gh_repo', 'entry_main', 'entry_client', 'lib_mode'];
+  'mappings', 'yarn_mappings', 'loom_version', 'java_version', 'gradle_version', 'gh_repo', 'entry_main', 'entry_client', 'lib_mode',
+  'tpl_group', 'tpl_author', 'tpl_desc', 'tpl_license'];
 
 // ───────── Conexión con GitHub ─────────
 const GH_API = 'https://api.github.com';
@@ -783,6 +820,252 @@ wireDrop('dropProj', 'inProj', (items) => {
   loadProjectZip(z.file);
 });
 
+// ───────── Generador de plantilla ─────────
+function pascal(s) {
+  let n = String(s).replace(/[^A-Za-z0-9]+/g, ' ').trim().split(' ').filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join('');
+  if (!n) n = 'ExampleMod';
+  if (/^\d/.test(n)) n = 'Mod' + n;
+  return n;
+}
+function tplMsg(text, kind) {
+  const el = $('tplMsg');
+  el.textContent = text;
+  el.className = 'note ' + (kind === 'bad' ? 'text-bad' : kind === 'ok' ? 'text-accent' : 'text-mute');
+}
+function tplLicenseText(id, author) {
+  const who = author || 'the authors';
+  const year = new Date().getFullYear();
+  if (id === 'MIT') {
+    return [
+      'MIT License', '', `Copyright (c) ${year} ${who}`, '',
+      'Permission is hereby granted, free of charge, to any person obtaining a copy',
+      'of this software and associated documentation files (the "Software"), to deal',
+      'in the Software without restriction, including without limitation the rights',
+      'to use, copy, modify, merge, publish, distribute, sublicense, and/or sell',
+      'copies of the Software, and to permit persons to whom the Software is',
+      'furnished to do so, subject to the following conditions:', '',
+      'The above copyright notice and this permission notice shall be included in all',
+      'copies or substantial portions of the Software.', '',
+      'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR',
+      'IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,',
+      'FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE',
+      'AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER',
+      'LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,',
+      'OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE',
+      'SOFTWARE.', ''
+    ].join('\n');
+  }
+  if (id === 'CC0-1.0') {
+    return ['CC0 1.0 Universal', '', 'To the extent possible under law, ' + who + ' has waived all copyright and',
+      'related or neighboring rights to this work.', '',
+      'Full legal text: https://creativecommons.org/publicdomain/zero/1.0/legalcode', ''].join('\n');
+  }
+  return `Copyright (c) ${year} ${who}. All rights reserved.\n`;
+}
+
+function tplBuild() {
+  const v = (id) => $(id).value.trim();
+  const modId = v('mod_id'), name = v('mod_name') || modId, ver = v('version'), mc = v('minecraft_version');
+  const loader = v('fabric_loader_version'), api = v('fabric_api_version');
+  const moj = v('mappings') === 'mojang';
+  const yarn = v('yarn_mappings');
+  const loom = v('loom_version') || '1.9-SNAPSHOT';
+  const gradle = v('gradle_version') || '8.12.1';
+  const jv = parseInt(v('java_version'), 10) || javaFor(mc);
+  const group = v('tpl_group') || 'com.ejemplo';
+  const author = v('tpl_author'), desc = v('tpl_desc'), lic = v('tpl_license');
+  const wantClient = $('tpl_client').checked, split = $('tpl_split').checked;
+  const wantMixins = $('tpl_mixins').checked, wantData = $('tpl_datagen').checked;
+
+  if (!/^[a-z][a-z0-9_-]{1,63}$/.test(modId)) throw new Error('mod_id: usa minúsculas, números, _ o -, y empieza por una letra.');
+  for (const [k, val] of [['version', ver], ['minecraft_version', mc], ['fabric_loader_version', loader], ['fabric_api_version', api]]) {
+    if (!/^[0-9A-Za-z][0-9A-Za-z.+_-]{0,63}$/.test(val)) throw new Error(`${k}: valor vacío o con caracteres no permitidos.`);
+  }
+  if (!moj && !yarn) throw new Error('Indica la versión de Yarn (opciones avanzadas) o cambia a mappings de Mojang.');
+  if (!/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/.test(group)) throw new Error('Paquete base: usa minúsculas separadas por puntos, por ejemplo com.ejemplo.');
+
+  const pkg = group + '.' + modId.replace(/-/g, '_');
+  const pdir = pkg.replace(/\./g, '/');
+  const cls = pascal(name);
+  const clientSrc = split ? 'src/client/java/' : 'src/main/java/';
+  const files = [];
+  const add = (path, text) => files.push({ path, text: Array.isArray(text) ? text.join('\n') : text });
+
+  // gradle.properties
+  add('gradle.properties', [
+    'org.gradle.jvmargs=-Xmx1G', 'org.gradle.parallel=true', 'org.gradle.configuration-cache=false', '',
+    '# Fabric: https://fabricmc.net/develop',
+    `minecraft_version=${mc}`,
+    moj ? '# mappings oficiales de Mojang' : `yarn_mappings=${yarn}`,
+    `loader_version=${loader}`,
+    `loom_version=${loom}`, '',
+    '# Mod',
+    `mod_version=${ver}`, `maven_group=${group}`, `archives_base_name=${modId}`, '',
+    '# Dependencias', `fabric_version=${api}`, ''
+  ]);
+
+  // settings.gradle
+  add('settings.gradle', SETTINGS);
+
+  // build.gradle
+  const bg = [];
+  bg.push('plugins {', '\tid \'fabric-loom\' version "${loom_version}"', '\tid \'maven-publish\'', '}', '');
+  bg.push('version = project.mod_version', 'group = project.maven_group', '');
+  bg.push('base {', '\tarchivesName = project.archives_base_name', '}', '');
+  bg.push('repositories {', '\t// Añade aquí repositorios para dependencias extra.', '}', '');
+  if (split) {
+    bg.push('loom {', '\tsplitEnvironmentSourceSets()', '',
+      '\tmods {', `\t\t"${modId}" {`, '\t\t\tsourceSet sourceSets.main', '\t\t\tsourceSet sourceSets.client', '\t\t}', '\t}', '}', '');
+  }
+  if (wantData) {
+    bg.push('fabricApi {', '\tconfigureDataGeneration()', '}', '');
+  }
+  bg.push('dependencies {');
+  bg.push('\tminecraft "com.mojang:minecraft:${project.minecraft_version}"');
+  bg.push(moj ? '\tmappings loom.officialMojangMappings()' : '\tmappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"');
+  bg.push('\tmodImplementation "net.fabricmc:fabric-loader:${project.loader_version}"');
+  bg.push('\tmodImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"');
+  bg.push('}', '');
+  bg.push('processResources {', '\tinputs.property "version", project.version', '',
+    '\tfilesMatching("fabric.mod.json") {', '\t\texpand "version": inputs.properties.version', '\t}', '}', '');
+  bg.push('tasks.withType(JavaCompile).configureEach {', `\tit.options.release = ${jv}`, '\tit.options.encoding = "UTF-8"', '}', '');
+  bg.push('java {', '\twithSourcesJar()', `\tsourceCompatibility = JavaVersion.VERSION_${jv}`, `\ttargetCompatibility = JavaVersion.VERSION_${jv}`, '}', '');
+  bg.push('jar {', '\tinputs.property "archivesName", project.base.archivesName', '',
+    '\tfrom("LICENSE") {', '\t\trename { "${it}_${inputs.properties.archivesName}" }', '\t}', '}', '');
+  add('build.gradle', bg);
+
+  // fabric.mod.json
+  const modJson = {
+    schemaVersion: 1, id: modId, version: '${version}', name, description: desc,
+    authors: author ? [author] : [], license: lic, environment: '*', entrypoints: { main: [`${pkg}.${cls}`] }
+  };
+  if (wantClient) modJson.entrypoints.client = [`${pkg}.${cls}Client`];
+  if (wantData) modJson.entrypoints['fabric-datagen'] = [`${pkg}.${cls}DataGenerator`];
+  if (wantMixins) {
+    modJson.mixins = [`${modId}.mixins.json`];
+    if (split && wantClient) modJson.mixins.push({ config: `${modId}.client.mixins.json`, environment: 'client' });
+  }
+  modJson.depends = { fabricloader: '>=' + loader, minecraft: '~' + mc, java: '>=' + jv, 'fabric-api': '*' };
+  add('src/main/resources/fabric.mod.json', JSON.stringify(modJson, null, 2) + '\n');
+
+  // Clase principal
+  add(`src/main/java/${pdir}/${cls}.java`, [
+    `package ${pkg};`, '',
+    'import net.fabricmc.api.ModInitializer;', 'import org.slf4j.Logger;', 'import org.slf4j.LoggerFactory;', '',
+    `public class ${cls} implements ModInitializer {`,
+    `\tpublic static final String MOD_ID = "${modId}";`, '',
+    '\t// Este logger escribe en la consola y en el registro del juego.',
+    '\tpublic static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);', '',
+    '\t@Override', '\tpublic void onInitialize() {',
+    `\t\tLOGGER.info("Hola desde ${name.replace(/["\\]/g, '')}!");`, '\t}', '}', ''
+  ]);
+
+  // Clase de cliente
+  if (wantClient) {
+    add(`${clientSrc}${pdir}/${cls}Client.java`, [
+      `package ${pkg};`, '', 'import net.fabricmc.api.ClientModInitializer;', '',
+      `public class ${cls}Client implements ClientModInitializer {`,
+      '\t@Override', '\tpublic void onInitializeClient() {', '\t\t// Código que solo corre en el cliente.', '\t}', '}', ''
+    ]);
+  }
+
+  // Generación de datos
+  if (wantData) {
+    add(`${clientSrc}${pdir}/${cls}DataGenerator.java`, [
+      `package ${pkg};`, '',
+      'import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;',
+      'import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;', '',
+      `public class ${cls}DataGenerator implements DataGeneratorEntrypoint {`,
+      '\t@Override', '\tpublic void onInitializeDataGenerator(FabricDataGenerator fabricDataGenerator) {',
+      '\t\t// FabricDataGenerator.Pack pack = fabricDataGenerator.createPack();', '\t}', '}', ''
+    ]);
+  }
+
+  // Mixins
+  if (wantMixins) {
+    const srvM = moj ? 'loadLevel' : 'loadWorld';
+    const cliC = moj ? 'Minecraft' : 'MinecraftClient';
+    const cliP = moj ? 'net.minecraft.client.Minecraft' : 'net.minecraft.client.MinecraftClient';
+    const mixImports = (cn) => [
+      `import ${cn};`, 'import org.spongepowered.asm.mixin.Mixin;',
+      'import org.spongepowered.asm.mixin.injection.At;', 'import org.spongepowered.asm.mixin.injection.Inject;',
+      'import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;', ''
+    ];
+    const cfg = (p, key, list) => JSON.stringify({
+      required: true, package: p, compatibilityLevel: 'JAVA_' + jv, [key]: list,
+      injectors: { defaultRequire: 1 }, overwrites: { requireAnnotations: true }
+    }, null, 2) + '\n';
+
+    add(`src/main/java/${pdir}/mixin/ExampleMixin.java`, [
+      `package ${pkg}.mixin;`, '', ...mixImports('net.minecraft.server.MinecraftServer'),
+      '@Mixin(MinecraftServer.class)', 'public class ExampleMixin {',
+      `\t@Inject(at = @At("HEAD"), method = "${srvM}")`, '\tprivate void init(CallbackInfo info) {',
+      '\t\t// Se ejecuta al cargar el mundo.', '\t}', '}', ''
+    ]);
+
+    if (split && wantClient) {
+      add(`src/main/resources/${modId}.mixins.json`, cfg(`${pkg}.mixin`, 'mixins', ['ExampleMixin']));
+      add(`src/client/java/${pdir}/mixin/client/ExampleClientMixin.java`, [
+        `package ${pkg}.mixin.client;`, '', ...mixImports(cliP),
+        `@Mixin(${cliC}.class)`, 'public class ExampleClientMixin {',
+        '\t@Inject(at = @At("HEAD"), method = "run")', '\tprivate void init(CallbackInfo info) {',
+        '\t\t// Se ejecuta al iniciar el cliente.', '\t}', '}', ''
+      ]);
+      add(`src/client/resources/${modId}.client.mixins.json`, cfg(`${pkg}.mixin.client`, 'client', ['ExampleClientMixin']));
+    } else {
+      add(`src/main/resources/${modId}.mixins.json`, cfg(`${pkg}.mixin`, 'mixins', ['ExampleMixin']));
+    }
+  }
+
+  add('LICENSE', tplLicenseText(lic, author));
+  add('.gitignore', ['.gradle/', 'build/', 'out/', 'run/', '.idea/', '*.iml', '.vscode/', 'bin/', '.DS_Store', '']);
+  add('README.md', [
+    `# ${name}`, '', desc || 'Mod de Fabric generado con el compilador.', '',
+    `- Minecraft ${mc}, Fabric Loader ${loader}, Fabric API ${api}`,
+    `- Java ${jv}, mappings ${moj ? 'Mojang' : 'Yarn ' + yarn}`, '',
+    '## Compilar', '', 'Con Gradle ' + gradle + ' instalado: `gradle build`. El .jar queda en `build/libs/`.', ''
+  ]);
+  // El split necesita carpeta de recursos de cliente aunque esté vacía
+  if (split) add('src/client/resources/.gitkeep', '');
+
+  return { files, jv, gradle, name, cls, pkg };
+}
+
+function tplUse() {
+  try {
+    const t = tplBuild();
+    clearProject();
+    state.project = {
+      files: t.files.map((f) => ({ path: f.path, blob: new Blob([f.text], { type: 'text/plain' }) })),
+      gradle: t.gradle, java: t.jv, name: 'plantilla'
+    };
+    saveForm();
+    showProj([
+      `Plantilla generada: ${t.name}`,
+      `${t.files.length} archivos, clase principal ${t.pkg}.${t.cls}. Java ${t.jv}, Gradle ${t.gradle}.`,
+      'Está lista para compilar con el botón «Compilar». Las secciones de código, fabric.mod.json, recursos y librerías de abajo se ignoran.'
+    ]);
+    tplMsg('Plantilla cargada en el compilador.', 'ok');
+    $('formMsg').textContent = '';
+  } catch (e) { tplMsg(e.message, 'bad'); }
+}
+async function tplDownload() {
+  try {
+    const t = tplBuild();
+    const zip = new JSZip();
+    const root = $('mod_id').value.trim() + '/';
+    t.files.forEach((f) => zip.file(root + f.path, f.text));
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    const a = h('a', { href: URL.createObjectURL(blob), download: $('mod_id').value.trim() + '-plantilla.zip' });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    tplMsg(`Descargada: ${t.files.length} archivos.`, 'ok');
+  } catch (e) { tplMsg(e.message, 'bad'); }
+}
+$('tplUse').addEventListener('click', tplUse);
+$('tplDownload').addEventListener('click', tplDownload);
+$('tpl_split').addEventListener('change', () => { if ($('tpl_split').checked) $('tpl_client').checked = true; });
+
 // ───────── Consola ─────────
 const con = $('console');
 const MAX_LINES = 8000;
@@ -933,7 +1216,7 @@ function validate() {
     if (!/^[0-9A-Za-z][0-9A-Za-z.+_-]{0,63}$/.test($(id).value.trim())) return `${id}: valor vacío o con caracteres no permitidos.`;
   }
   if ($('mappings').value === 'yarn' && !$('yarn_mappings').value.trim()) return 'Indica la versión de Yarn (opciones avanzadas) o cambia a mappings de Mojang.';
-  if (!state.java.length) return 'Sube al menos un archivo .java.';
+  if (!state.java.length) return 'Sube al menos un archivo .java, o genera una plantilla.';
   if (!checkJson()) return 'fabric.mod.json no es un JSON válido.';
   return '';
 }
