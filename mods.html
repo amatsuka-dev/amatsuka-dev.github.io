@@ -402,8 +402,12 @@ jobs:
             (cd /tmp/proj && find . -type f ! -path './.gradle/*' ! -path './build/*' | sort | head -n 150) || true
             echo "--- build.gradle ---"
             cat /tmp/proj/build.gradle /tmp/proj/build.gradle.kts 2>/dev/null || true
+            echo "--- Version de Gradle ---"
+            gradle --version 2>/dev/null | grep "^Gradle" || true
+            echo "--- Recursos procesados ---"
+            (cd /tmp/proj && find build/resources -type f | sort) 2>/dev/null || true
             echo "--- .jar generados ---"
-            find /tmp/proj -name '*.jar' -path '*/build/*' 2>/dev/null | sort | head -n 20 | while read -r j; do
+            find /tmp/proj -name '*.jar' -path '*/build/*' ! -path '*/loom-cache/*' 2>/dev/null | sort | head -n 20 | while read -r j; do
               echo "## $j"
               unzip -l "$j" | head -n 30 || true
             done
@@ -863,7 +867,9 @@ async function loadProjectZip(file) {
     const gv = ((await txt('gradle/wrapper/gradle-wrapper.properties')) || '').match(/gradle-(\d+(?:\.\d+){1,2})-/);
     const jm = bg.match(/JavaVersion\.VERSION_(\d+)/) || bg.match(/release\s*=\s*(\d+)/) || bg.match(/JavaLanguageVersion\.of\((\d+)\)/);
     const files = await Promise.all(inRoot.map(async ({ e, rel }) => ({ path: rel, blob: await e.async('blob') })));
-    state.project = { files, gradle: gv ? gv[1] : null, java: jm && +jm[1] >= 8 ? +jm[1] : null, name: file.name };
+    // Sin wrapper: Loom 1.8 se compila con Gradle 8.10.2 en vez del valor por defecto.
+    const oldLoom = /fabric-loom['"]\s*\)?\s*version\s*\(?\s*['"]1\.8[.-]/.test(bg);
+    state.project = { files, gradle: gv ? gv[1] : oldLoom ? '8.10.2' : null, java: jm && +jm[1] >= 8 ? +jm[1] : null, name: file.name };
     // Muestra los .java y el fabric.mod.json en sus secciones; lo que edites ahí es lo que se compila.
     const managed = new Set();
     for (const { path, blob } of files) {
