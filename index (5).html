@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compilador de mods Fabric</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#0c1316',
+          panel: '#121b1f',
+          edge: '#22333a',
+          ink: '#dce8ea',
+          mute: '#84989e',
+          accent: '#00ffe6',
+          bad: '#ff6b6b',
+          warn: '#ffc857'
+        },
+        fontFamily: {
+          sans: ['Onest', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
+        }
+      }
+    }
+  };
+</script>
+<style type="text/tailwindcss">
+  @layer components {
+    .panel { @apply rounded-xl border border-edge bg-panel p-5; }
+    .panel h2 { @apply mb-4 text-base font-semibold text-ink; }
+    .lbl { @apply mb-1 block text-sm text-mute; }
+    .field { @apply w-full rounded-lg border border-edge bg-bg px-3 py-2 text-sm text-ink placeholder:text-mute/60 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent; }
+    .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent; }
+    .btn-primary { @apply bg-accent text-bg hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-accent; }
+    .btn-ghost { @apply border border-edge text-ink hover:border-accent hover:text-accent; }
+    .drop { @apply flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-edge px-4 py-6 text-center text-sm text-mute transition-colors hover:border-accent/70; }
+    .drop strong { @apply font-medium text-ink; }
+    .note { @apply mt-2 min-h-[1.25rem] text-xs text-mute; }
+    .rm { @apply rounded-md px-2 py-1 text-mute hover:bg-bad/10 hover:text-bad focus-visible:outline focus-visible:outline-2 focus-visible:outline-bad; }
+  }
+</style>
+<style>
+  html { color-scheme: dark; }
+  .drop:focus-within, .drop.over { border-color: #00ffe6; background: rgba(0,255,230,.05); color: #dce8ea; }
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "n x" "p p"; gap: .5rem; align-items: center; }
+  .row > .n { grid-area: n; } .row > .p { grid-area: p; } .row > .x { grid-area: x; }
+  @media (min-width: 768px) {
+    .row { grid-template-columns: minmax(0, 13rem) minmax(0, 1fr) auto; grid-template-areas: "n p x"; }
+  }
+  .console {
+    border: 1px solid rgba(0,255,230,.28);
+    box-shadow: 0 0 0 1px rgba(0,255,230,.08), 0 0 48px -14px rgba(0,255,230,.35);
+  }
+  .dot-run { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  @media (prefers-reduced-motion: reduce) { .dot-run { animation: none; } }
+  #console::-webkit-scrollbar { width: 10px; }
+  #console::-webkit-scrollbar-thumb { background: #22333a; border-radius: 8px; }
+</style>
+</head>
+<body class="bg-bg font-sans text-ink antialiased">
+<div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">
+
+  <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Compilador de mods <span class="text-accent">Fabric</span></h1>
+      <p class="mt-1 text-sm text-mute">Sube tu código, se compila en GitHub Actions y descargas el .jar. No instalas nada en tu PC.</p>
+    </div>
+    <div id="health" class="rounded-full border border-edge px-3 py-1 text-xs text-mute">Sin conectar</div>
+  </header>
+
+  <section class="panel mb-6" aria-labelledby="h-gh">
+    <h2 id="h-gh">Conexión con GitHub</h2>
+    <p class="mb-4 text-sm text-mute">La compilación corre gratis en los servidores de GitHub. Necesitas una cuenta y un repositorio. El token se guarda solo en este navegador y solo se envía a api.github.com.</p>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div><label class="lbl" for="gh_repo">Repositorio</label>
+        <input id="gh_repo" class="field font-mono" placeholder="usuario/mis-compilaciones" autocomplete="off" spellcheck="false"></div>
+      <div><label class="lbl" for="gh_token">Token de acceso</label>
+        <input id="gh_token" type="password" class="field font-mono" placeholder="github_pat_…" autocomplete="off"></div>
+    </div>
+    <label class="mt-3 flex items-center gap-2 text-sm text-mute">
+      <input id="gh_remember" type="checkbox" class="accent-[#00ffe6]"> Recordar el token en este navegador
+    </label>
+    <div class="mt-4 flex flex-wrap items-center gap-3">
+      <button id="ghTest" type="button" class="btn btn-ghost">Probar conexión</button>
+      <button id="ghInstall" type="button" class="btn btn-ghost">Instalar el workflow en el repositorio</button>
+      <span id="ghMsg" class="text-xs text-mute" role="status"></span>
+    </div>
+    <details class="mt-4 text-sm text-mute">
+      <summary class="cursor-pointer">Cómo conseguirlo (2 minutos)</summary>
+      <ol class="mt-2 list-decimal space-y-1 pl-5">
+        <li>En github.com crea un repositorio nuevo (puede ser privado) y marca «Add a README file».</li>
+        <li>Ve a Settings, Developer settings, Personal access tokens, Fine-grained tokens, Generate new token.</li>
+        <li>En «Repository access» elige solo ese repositorio. En los permisos de repositorio pon Contents, Actions y Workflows en «Read and write».</li>
+        <li>Copia el token, pégalo arriba y pulsa «Instalar el workflow en el repositorio». Se hace una sola vez.</li>
+      </ol>
+    </details>
+  </section>
+
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+
+    <!-- ───────── Columna izquierda: configuración y archivos ───────── -->
+    <div class="space-y-6">
+
+      <section class="panel" aria-labelledby="h-mod">
+        <h2 id="h-mod">Datos del mod</h2>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div><label class="lbl" for="mod_id">mod_id</label>
+            <input id="mod_id" class="field font-mono" value="mimod" autocomplete="off" spellcheck="false"></div>
+          <div><label class="lbl" for="mod_name">mod_name</label>
+            <input id="mod_name" class="field" value="Mi Mod" autocomplete="off"></div>
+          <div><label class="lbl" for="version">version</label>
+            <input id="version" class="field font-mono" value="1.0.0" autocomplete="off" spellcheck="false"></div>
+          <div><label class="lbl" for="minecraft_version">minecraft_version</label>
+            <input id="minecraft_version" class="field font-mono" value="1.21.1" autocomplete="off" spellcheck="false"></div>
+          <div><label class="lbl" for="fabric_loader_version">fabric_loader_version</label>
+            <input id="fabric_loader_version" class="field font-mono" value="0.16.9" autocomplete="off" spellcheck="false"></div>
+          <div><label class="lbl" for="fabric_api_version">fabric_api_version</label>
+            <input id="fabric_api_version" class="field font-mono" value="0.105.0+1.21.1" autocomplete="off" spellcheck="false"></div>
+        </div>
+        <p class="mt-3 text-xs text-mute">Comprueba las versiones que existen para tu Minecraft en
+          <a class="text-accent underline underline-offset-2" href="https://fabricmc.net/develop/" target="_blank" rel="noopener">fabricmc.net/develop</a>.</p>
+
+        <details class="mt-4 rounded-lg border border-edge px-4 py-3">
+          <summary class="cursor-pointer text-sm text-mute">Opciones avanzadas</summary>
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <div><label class="lbl" for="mappings">Mappings</label>
+              <select id="mappings" class="field">
+                <option value="yarn">Yarn</option>
+                <option value="mojang">Mojang (oficiales)</option>
+              </select></div>
+            <div id="yarnWrap"><label class="lbl" for="yarn_mappings">Versión de Yarn</label>
+              <input id="yarn_mappings" class="field font-mono" value="1.21.1+build.3" autocomplete="off" spellcheck="false"></div>
+            <div><label class="lbl" for="loom_version">Versión de Loom</label>
+              <input id="loom_version" class="field font-mono" placeholder="vacío = la de la plantilla" autocomplete="off" spellcheck="false"></div>
+            <div><label class="lbl" for="java_version">Versión de Java</label>
+              <input id="java_version" class="field font-mono" inputmode="numeric" placeholder="vacío = según Minecraft" autocomplete="off"></div>
+            <div><label class="lbl" for="gradle_version">Versión de Gradle</label>
+              <input id="gradle_version" class="field font-mono" value="8.12.1" autocomplete="off" spellcheck="false"></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel" aria-labelledby="h-java">
+        <h2 id="h-java">Código fuente (.java)</h2>
+        <label class="drop" id="dropJava">
+          <input id="inJava" type="file" multiple accept=".java" class="sr-only">
+          <span><strong>Arrastra archivos o carpetas</strong> con tu código, o haz clic para elegir</span>
+          <span class="text-xs">La ruta de paquete se detecta sola desde la línea <code class="font-mono">package</code>; puedes editarla.</span>
+        </label>
+        <p id="noteJava" class="note" aria-live="polite"></p>
+        <ul id="javaList" class="space-y-2"></ul>
+      </section>
+
+      <section class="panel" aria-labelledby="h-json">
+        <h2 id="h-json">fabric.mod.json</h2>
+        <label class="drop" id="dropJson">
+          <input id="inJson" type="file" accept=".json,application/json" class="sr-only">
+          <span><strong>Arrastra tu fabric.mod.json</strong> o haz clic para elegirlo</span>
+        </label>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div><label class="lbl" for="entry_main">Clase principal (entrypoint main)</label>
+            <input id="entry_main" class="field font-mono text-xs" placeholder="com.ejemplo.mimod.MiMod" autocomplete="off" spellcheck="false"></div>
+          <div><label class="lbl" for="entry_client">Clase de cliente (opcional)</label>
+            <input id="entry_client" class="field font-mono text-xs" placeholder="com.ejemplo.mimod.MiModClient" autocomplete="off" spellcheck="false"></div>
+        </div>
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <button id="autogen" type="button" class="btn btn-ghost">Autogenerar con los datos del formulario</button>
+          <span id="noteJson" class="text-xs text-mute" aria-live="polite"></span>
+        </div>
+        <label class="lbl mt-4" for="modJson">Contenido (editable)</label>
+        <textarea id="modJson" rows="10" class="field font-mono text-xs leading-relaxed" spellcheck="false" placeholder='{ "schemaVersion": 1, … }'></textarea>
+      </section>
+
+      <section class="panel" aria-labelledby="h-res">
+        <h2 id="h-res">Recursos (assets/ o data/)</h2>
+        <label class="drop" id="dropRes">
+          <input id="inRes" type="file" multiple class="sr-only">
+          <span><strong>Arrastra un .zip, carpetas o archivos sueltos</strong> (.png, .json, .ogg…)</span>
+          <span class="text-xs">Un .zip se extrae en la raíz de <code class="font-mono">src/main/resources</code>, así que debe contener <code class="font-mono">assets/</code> o <code class="font-mono">data/</code>.</span>
+        </label>
+        <p id="noteRes" class="note" aria-live="polite"></p>
+        <ul id="resList" class="space-y-2"></ul>
+      </section>
+
+      <section class="panel" aria-labelledby="h-lib">
+        <h2 id="h-lib">Librería externa (.jar)</h2>
+        <label class="drop" id="dropLib">
+          <input id="inLib" type="file" multiple accept=".jar" class="sr-only">
+          <span><strong>Arrastra un .jar</strong> para añadirlo a <code class="font-mono">libs/</code></span>
+        </label>
+        <p id="noteLib" class="note" aria-live="polite"></p>
+        <ul id="libList" class="space-y-2"></ul>
+        <div class="mt-3">
+          <label class="lbl" for="lib_mode">Cómo usar las librerías</label>
+          <select id="lib_mode" class="field">
+            <option value="compile">Solo para compilar (no se incluyen en tu .jar)</option>
+            <option value="shade">Incluir dentro de mi .jar (shade)</option>
+            <option value="mod">Es un mod de Fabric (modImplementation)</option>
+          </select>
+        </div>
+      </section>
+    </div>
+
+    <!-- ───────── Columna derecha: compilación ───────── -->
+    <div class="lg:sticky lg:top-6 lg:self-start">
+      <section class="panel" aria-labelledby="h-build">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 id="h-build" class="!mb-0">Compilación</h2>
+          <div class="flex items-center gap-3 text-sm">
+            <span id="status" class="inline-flex items-center gap-2 text-mute" role="status">
+              <span id="dot" class="h-2 w-2 rounded-full bg-mute"></span><span id="statusText">Inactivo</span>
+            </span>
+            <span id="timer" class="font-mono text-xs text-mute" aria-label="Tiempo transcurrido"></span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <button id="compile" type="button" class="btn btn-primary">Compilar</button>
+          <a id="download" class="btn btn-primary" role="link" aria-disabled="true" tabindex="-1" style="opacity:.4;pointer-events:none">Descargar .jar</a>
+          <button id="clear" type="button" class="btn btn-ghost">Limpiar</button>
+          <button id="copy" type="button" class="btn btn-ghost">Copiar registro</button>
+        </div>
+        <p id="formMsg" class="mt-3 min-h-[1.25rem] text-sm text-bad" role="alert"></p>
+        <p id="jarInfo" class="mb-3 text-sm text-accent"></p>
+
+        <div id="console" class="console h-[26rem] overflow-y-auto rounded-lg bg-bg p-4 font-mono text-xs leading-relaxed lg:h-[calc(100vh-24rem)] lg:min-h-[22rem]"
+             role="log" aria-label="Registro de ./gradlew build" tabindex="0">
+          <div class="text-mute">Aquí aparecerá la salida de <span class="text-ink">./gradlew build</span> en tiempo real.</div>
+        </div>
+
+        <div id="errBox" class="mt-4 hidden rounded-lg border border-bad/50 bg-bad/5 p-4">
+          <h3 class="mb-2 text-sm font-semibold text-bad">La compilación falló</h3>
+          <pre id="errText" class="max-h-56 overflow-auto whitespace-pre-wrap break-words font-mono text-xs text-ink"></pre>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script type="text/plain" id="workflowYml">
+name: Compilar mod de Fabric
+run-name: build ${{ inputs.job_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: Identificador del trabajo (lo genera la pagina)
+        required: true
+        type: string
+      java:
+        description: Version de Java
+        required: false
+        default: '21'
+        type: string
+      gradle:
+        description: Version de Gradle
+        required: false
+        default: '8.12.1'
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fabric-build
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      JOB_ID: ${{ inputs.job_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ inputs.java }}
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ inputs.gradle }}
+
+      - name: Preparar proyecto
+        run: |
+          mkdir -p /tmp/proj
+          unzip -q "jobs/${JOB_ID}.zip" -d /tmp/proj
+          if [ -d /tmp/proj/resource-zips ]; then
+            mkdir -p /tmp/proj/src/main/resources
+            for z in /tmp/proj/resource-zips/*.zip; do
+              if [ -e "$z" ]; then unzip -qo "$z" -d /tmp/proj/src/main/resources; fi
+            done
+          fi
+
+      - name: Compilar con Gradle
+        id: build
+        working-directory: /tmp/proj
+        run: gradle build --console=plain --no-daemon 2>&1 | tee /tmp/build.log
+
+      - name: Guardar resultado
+        if: always()
+        env:
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          out="results/${JOB_ID}"
+          mkdir -p "$out"
+          if [ -f /tmp/build.log ]; then
+            cp /tmp/build.log "$out/build.log"
+          else
+            echo "No se llego a compilar. Revisa el paso 'Preparar proyecto' en la pestana Actions." > "$out/build.log"
+          fi
+          jar=$(ls /tmp/proj/build/libs/*.jar 2>/dev/null | grep -v -e '-sources.jar' -e '-javadoc.jar' | head -n1 || true)
+          if [ "$BUILD_OUTCOME" = "success" ] && [ -n "$jar" ]; then
+            cp "$jar" "$out/mod.jar"
+            basename "$jar" > "$out/jar-name.txt"
+            echo success > "$out/status.txt"
+          else
+            echo failed > "$out/status.txt"
+          fi
+          git rm -q --ignore-unmatch "jobs/${JOB_ID}.zip"
+          ls -1 results | sort -r | tail -n +6 | while read -r d; do git rm -rqf "results/$d"; done
+          git config user.name "fabric-builder"
+          git config user.email "fabric-builder@users.noreply.github.com"
+          git add -A results
+          git commit -qm "Resultado ${JOB_ID}"
+          git pull -q --rebase origin "$BRANCH" || true
+          git push -q origin "HEAD:$BRANCH"
+</script>
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const h = (tag, props = {}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k === 'value') el.value = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v);
+  }
+  el.append(...kids);
+  return el;
+};
+
+const state = { java: [], res: [], zips: [], libs: [], jobId: null, es: null, busy: false };
+const FORM_IDS = ['mod_id', 'mod_name', 'version', 'minecraft_version', 'fabric_loader_version', 'fabric_api_version',
+  'mappings', 'yarn_mappings', 'loom_version', 'java_version', 'gradle_version', 'gh_repo', 'entry_main', 'entry_client', 'lib_mode'];
+
+// ───────── Conexión con GitHub ─────────
+const GH_API = 'https://api.github.com';
+const RAW = 'application/vnd.github.raw+json';
+try {
+  $('gh_token').value = localStorage.getItem('fabricGhToken') || sessionStorage.getItem('fabricGhToken') || '';
+  $('gh_remember').checked = Boolean(localStorage.getItem('fabricGhToken'));
+} catch {}
+function storeToken() {
+  try {
+    localStorage.removeItem('fabricGhToken'); sessionStorage.removeItem('fabricGhToken');
+    const t = $('gh_token').value.trim();
+    if (t) ($('gh_remember').checked ? localStorage : sessionStorage).setItem('fabricGhToken', t);
+  } catch {}
+}
+$('gh_token').addEventListener('input', storeToken);
+$('gh_remember').addEventListener('change', storeToken);
+
+function setPill(text, kind) {
+  const el = $('health');
+  el.textContent = text;
+  el.className = 'rounded-full border px-3 py-1 text-xs ' + (kind === 'ok' ? 'border-accent/50 text-accent' : kind === 'bad' ? 'border-bad/60 text-bad' : 'border-edge text-mute');
+}
+function ghMsg(text, kind) {
+  const el = $('ghMsg');
+  el.textContent = text;
+  el.className = 'text-xs ' + (kind === 'ok' ? 'text-accent' : kind === 'bad' ? 'text-bad' : 'text-mute');
+}
+function ghCfg() {
+  const repo = $('gh_repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').replace(/\/+$/, '');
+  const token = $('gh_token').value.trim();
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error('Escribe el repositorio como usuario/repositorio.');
+  if (!token) throw new Error('Falta el token de GitHub.');
+  return { repo, token };
+}
+async function gh(path, { method = 'GET', body, accept = 'application/vnd.github+json', raw = false } = {}) {
+  const { token } = ghCfg();
+  const res = await fetch(GH_API + path, {
+    method,
+    cache: 'no-store',
+    headers: { Authorization: `Bearer ${token}`, Accept: accept, 'X-GitHub-Api-Version': '2022-11-28', ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) {
+    let msg = '';
+    try { msg = (await res.json()).message; } catch {}
+    const e = new Error(`GitHub ${res.status}: ${msg || res.statusText}`);
+    e.status = res.status;
+    throw e;
+  }
+  if (res.status === 204) return null;
+  return raw ? res : res.json();
+}
+function b64FromText(t) {
+  let s = '';
+  new TextEncoder().encode(t).forEach((b) => { s += String.fromCharCode(b); });
+  return btoa(s);
+}
+async function putFile(repo, path, b64, message, branch) {
+  let sha;
+  try { sha = (await gh(`/repos/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}`)).sha; }
+  catch (e) { if (e.status !== 404) throw e; }
+  await gh(`/repos/${repo}/contents/${path}`, { method: 'PUT', body: { message, content: b64, branch, ...(sha ? { sha } : {}) } });
+}
+async function testGh() {
+  try {
+    const { repo } = ghCfg();
+    ghMsg('Comprobando…');
+    const info = await gh(`/repos/${repo}`);
+    state.branch = info.default_branch;
+    if (info.permissions && !info.permissions.push) throw new Error('El token no tiene permiso de escritura en este repositorio.');
+    try {
+      await gh(`/repos/${repo}/contents/.github/workflows/build.yml?ref=${encodeURIComponent(state.branch)}`);
+      ghMsg('Conexión correcta y workflow instalado.', 'ok');
+      setPill('GitHub listo', 'ok');
+    } catch (e) {
+      if (e.status !== 404) throw e;
+      ghMsg('Conectado. Falta instalar el workflow.', 'bad');
+      setPill('Falta el workflow', 'bad');
+    }
+  } catch (e) {
+    ghMsg(e.message, 'bad');
+    setPill('Sin conectar', 'bad');
+  }
+}
+async function installWorkflow() {
+  try {
+    const { repo } = ghCfg();
+    ghMsg('Instalando…');
+    const info = await gh(`/repos/${repo}`);
+    state.branch = info.default_branch;
+    await putFile(repo, '.github/workflows/build.yml', b64FromText($('workflowYml').textContent.trim() + '\n'), 'Añadir workflow de compilación de Fabric', state.branch);
+    ghMsg('Workflow instalado.', 'ok');
+    setPill('GitHub listo', 'ok');
+  } catch (e) {
+    ghMsg(e.status === 403 || e.status === 404 ? e.message + '. Revisa que el token tenga Contents y Workflows en «Read and write» para este repositorio.' : e.message, 'bad');
+  }
+}
+$('ghTest').addEventListener('click', testGh);
+$('ghInstall').addEventListener('click', installWorkflow);
+
+// ───────── Persistencia del formulario ─────────
+try {
+  const saved = JSON.parse(localStorage.getItem('fabricCompiler.form') || '{}');
+  for (const id of FORM_IDS) if (saved[id] != null) $(id).value = saved[id];
+} catch {}
+const saveForm = () => {
+  try { localStorage.setItem('fabricCompiler.form', JSON.stringify(Object.fromEntries(FORM_IDS.map((id) => [id, $(id).value])))); } catch {}
+};
+FORM_IDS.forEach((id) => $(id).addEventListener('input', saveForm));
+const syncYarn = () => { $('yarnWrap').style.display = $('mappings').value === 'yarn' ? '' : 'none'; };
+$('mappings').addEventListener('change', syncYarn);
+syncYarn();
+
+// ───────── Utilidades de archivos ─────────
+const fmtSize = (n) => (n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
+const dirOf = (rel) => (rel.includes('/') ? rel.slice(0, rel.lastIndexOf('/') + 1) : '');
+const joinPath = (dir, name) => {
+  let d = dir.replace(/\\/g, '/').trim().replace(/^\/+/, '');
+  if (d && !d.endsWith('/')) d += '/';
+  return d + name;
+};
+
+async function walk(entry, prefix = '') {
+  if (entry.isFile) return new Promise((ok) => entry.file((f) => ok([{ file: f, rel: prefix + entry.name }]), () => ok([])));
+  const reader = entry.createReader();
+  const all = [];
+  for (;;) {
+    const batch = await new Promise((ok, no) => reader.readEntries(ok, no));
+    if (!batch.length) break;
+    all.push(...batch);
+  }
+  return (await Promise.all(all.map((e) => walk(e, prefix + entry.name + '/')))).flat();
+}
+// Debe llamarse de forma síncrona dentro del evento drop (dataTransfer se invalida después).
+function collectDropped(dt) {
+  const entries = [...(dt.items || [])].map((i) => (i.webkitGetAsEntry ? i.webkitGetAsEntry() : null)).filter(Boolean);
+  if (!entries.length) return Promise.resolve([...dt.files].map((f) => ({ file: f, rel: f.name })));
+  return Promise.all(entries.map((e) => walk(e))).then((a) => a.flat());
+}
+
+function wireDrop(zoneId, inputId, onFiles) {
+  const zone = $(zoneId), input = $(inputId);
+  ['dragenter', 'dragover'].forEach((ev) => zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach((ev) => zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.remove('over'); }));
+  zone.addEventListener('drop', (e) => { collectDropped(e.dataTransfer).then(onFiles); });
+  input.addEventListener('change', () => {
+    onFiles([...input.files].map((f) => ({ file: f, rel: f.webkitRelativePath || f.name })));
+    input.value = '';
+  });
+}
+
+const rmBtn = (fn, label) => h('button', { type: 'button', class: 'rm x', 'aria-label': label, onclick: fn, text: '✕' });
+
+// ───────── Java ─────────
+wireDrop('dropJava', 'inJava', async (items) => {
+  const javas = items.filter((i) => i.file.name.endsWith('.java'));
+  const skipped = items.length - javas.length;
+  for (const { file, rel } of javas) {
+    const src = await file.text();
+    const pkg = (src.match(/^\s*package\s+([\w.]+)\s*;/m) || [])[1];
+    const cls = file.name.replace(/\.java$/, '');
+    const fq = (pkg ? pkg + '.' : '') + cls;
+    const item = {
+      file,
+      dir: pkg ? pkg.replace(/\./g, '/') + '/' : dirOf(rel),
+      main: /\bimplements\b[^{]*\bModInitializer\b/.test(src) ? fq : null,
+      client: /\bimplements\b[^{]*\bClientModInitializer\b/.test(src) ? fq : null,
+    };
+    state.java = state.java.filter((j) => !(j.dir === item.dir && j.file.name === file.name));
+    state.java.push(item);
+    if (item.main && !$('entry_main').value.trim()) $('entry_main').value = item.main;
+    if (item.client && !$('entry_client').value.trim()) $('entry_client').value = item.client;
+  }
+  saveForm();
+  $('noteJava').textContent = skipped ? `Se ignoraron ${skipped} archivo(s) que no son .java.` : '';
+  renderJava();
+});
+
+function renderJava() {
+  $('javaList').replaceChildren(...state.java.map((it) => h('li', { class: 'row' },
+    h('span', { class: 'n truncate font-mono text-sm', title: it.file.name, text: it.file.name }),
+    h('input', { class: 'field p font-mono text-xs', value: it.dir, placeholder: 'com/ejemplo/mimod/', 'aria-label': 'Ruta de ' + it.file.name,
+      oninput: (e) => { it.dir = e.target.value; } }),
+    rmBtn(() => { state.java = state.java.filter((x) => x !== it); renderJava(); }, 'Quitar ' + it.file.name))));
+}
+
+// ───────── fabric.mod.json ─────────
+wireDrop('dropJson', 'inJson', async (items) => {
+  const f = items.find((i) => i.file.name.endsWith('.json'));
+  if (!f) { $('noteJson').textContent = 'Elige un archivo .json.'; return; }
+  const text = await f.file.text();
+  $('modJson').value = text;
+  checkJson();
+});
+function checkJson() {
+  const t = $('modJson').value.trim();
+  if (!t) { $('noteJson').textContent = ''; return true; }
+  try { JSON.parse(t); $('noteJson').textContent = 'JSON válido.'; $('noteJson').className = 'text-xs text-accent'; return true; }
+  catch (e) { $('noteJson').textContent = 'JSON no válido: ' + e.message; $('noteJson').className = 'text-xs text-bad'; return false; }
+}
+$('modJson').addEventListener('input', checkJson);
+
+function autogen() {
+  const id = $('mod_id').value.trim(), mc = $('minecraft_version').value.trim();
+  const json = {
+    schemaVersion: 1,
+    id,
+    version: $('version').value.trim(),
+    name: $('mod_name').value.trim() || id,
+    description: '',
+    authors: [],
+    license: 'All-Rights-Reserved',
+    environment: '*',
+    depends: { fabricloader: '>=' + $('fabric_loader_version').value.trim(), minecraft: '~' + mc, 'fabric-api': '*' }
+  };
+  const main = $('entry_main').value.trim(), client = $('entry_client').value.trim();
+  if (main || client) {
+    json.entrypoints = {};
+    if (main) json.entrypoints.main = [main];
+    if (client) json.entrypoints.client = [client];
+  }
+  $('modJson').value = JSON.stringify(json, null, 2);
+  checkJson();
+}
+$('autogen').addEventListener('click', autogen);
+
+// ───────── Recursos ─────────
+function guessResPath(name, rel) {
+  const id = $('mod_id').value.trim() || 'mimod';
+  const r = rel.replace(/\\/g, '/');
+  const m = r.match(/(?:^|\/)((?:assets|data)\/.+)$/);
+  if (m) return m[1];
+  if (/\.mixins\.json$/.test(name)) return name;
+  if (/\.png$/i.test(name)) return `assets/${id}/textures/item/${name}`;
+  if (/\.json$/i.test(name)) return `assets/${id}/models/item/${name}`;
+  if (/\.(ogg|wav)$/i.test(name)) return `assets/${id}/sounds/${name}`;
+  return `assets/${id}/${name}`;
+}
+wireDrop('dropRes', 'inRes', (items) => {
+  for (const { file, rel } of items) {
+    if (/\.zip$/i.test(file.name)) { state.zips.push({ file }); continue; }
+    state.res.push({ file, path: guessResPath(file.name, rel) });
+  }
+  $('noteRes').textContent = '';
+  renderRes();
+});
+function renderRes() {
+  const zipRows = state.zips.map((z) => h('li', { class: 'row' },
+    h('span', { class: 'n truncate font-mono text-sm', title: z.file.name, text: z.file.name }),
+    h('span', { class: 'p text-xs text-mute', text: `zip, ${fmtSize(z.file.size)}, se extrae en resources/` }),
+    rmBtn(() => { state.zips = state.zips.filter((x) => x !== z); renderRes(); }, 'Quitar ' + z.file.name)));
+  const fileRows = state.res.map((r) => h('li', { class: 'row' },
+    h('span', { class: 'n truncate font-mono text-sm', title: r.file.name, text: r.file.name }),
+    h('input', { class: 'field p font-mono text-xs', value: r.path, 'aria-label': 'Ruta de ' + r.file.name, oninput: (e) => { r.path = e.target.value; } }),
+    rmBtn(() => { state.res = state.res.filter((x) => x !== r); renderRes(); }, 'Quitar ' + r.file.name)));
+  $('resList').replaceChildren(...zipRows, ...fileRows);
+}
+
+// ───────── Librerías ─────────
+wireDrop('dropLib', 'inLib', (items) => {
+  const jars = items.filter((i) => /\.jar$/i.test(i.file.name));
+  jars.forEach(({ file }) => { if (!state.libs.some((l) => l.file.name === file.name)) state.libs.push({ file }); });
+  $('noteLib').textContent = jars.length < items.length ? 'Solo se aceptan archivos .jar.' : '';
+  renderLibs();
+});
+function renderLibs() {
+  $('libList').replaceChildren(...state.libs.map((l) => h('li', { class: 'row' },
+    h('span', { class: 'n truncate font-mono text-sm', title: l.file.name, text: l.file.name }),
+    h('span', { class: 'p text-xs text-mute', text: fmtSize(l.file.size) }),
+    rmBtn(() => { state.libs = state.libs.filter((x) => x !== l); renderLibs(); }, 'Quitar ' + l.file.name))));
+}
+
+// ───────── Consola ─────────
+const con = $('console');
+const MAX_LINES = 8000;
+let pending = [];
+let raf = 0;
+let stick = true;
+con.addEventListener('scroll', () => { stick = con.scrollTop + con.clientHeight >= con.scrollHeight - 24; });
+
+function classify(line, level) {
+  if (level === 'info') return 'text-accent/80';
+  if (level === 'warn') return 'text-warn';
+  if (level === 'error' || /\berror\b:|FAILED|FAILURE|Exception/.test(line)) return 'text-bad';
+  if (/warning:/i.test(line)) return 'text-warn';
+  if (/BUILD SUCCESSFUL/.test(line)) return 'font-semibold text-accent';
+  if (/^> Task/.test(line)) return 'text-mute';
+  return 'text-ink/85';
+}
+function addLine(line, level = 'out') {
+  pending.push(h('div', { class: 'whitespace-pre-wrap break-words ' + classify(line, level), text: line || '\u00a0' }));
+  if (!raf) raf = requestAnimationFrame(flushLines);
+}
+function flushLines() {
+  raf = 0;
+  con.append(...pending);
+  pending = [];
+  while (con.childElementCount > MAX_LINES) con.firstElementChild.remove();
+  if (stick) con.scrollTop = con.scrollHeight;
+}
+$('clear').addEventListener('click', () => { con.replaceChildren(); $('errBox').classList.add('hidden'); $('jarInfo').textContent = ''; });
+$('copy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(con.innerText); $('formMsg').className = 'mt-3 min-h-[1.25rem] text-sm text-accent'; $('formMsg').textContent = 'Registro copiado.'; }
+  catch { $('formMsg').textContent = 'No se pudo copiar el registro.'; }
+});
+
+// ───────── Estado y temporizador ─────────
+let tick = 0, t0 = 0;
+function setStatus(kind) {
+  const map = {
+    idle: ['Inactivo', 'bg-mute', ''],
+    queued: ['En cola', 'bg-warn', ''],
+    running: ['Compilando', 'bg-accent', 'dot-run'],
+    success: ['Listo', 'bg-accent', ''],
+    failed: ['Falló', 'bg-bad', '']
+  };
+  const [text, color, extra] = map[kind];
+  $('statusText').textContent = text;
+  $('dot').className = `h-2 w-2 rounded-full ${color} ${extra}`;
+  state.busy = kind === 'queued' || kind === 'running';
+  $('compile').disabled = state.busy;
+  if (kind === 'running' && !tick) {
+    t0 = Date.now();
+    tick = setInterval(() => {
+      const s = Math.floor((Date.now() - t0) / 1000);
+      $('timer').textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    }, 500);
+  }
+  if ((kind === 'success' || kind === 'failed') && tick) { clearInterval(tick); tick = 0; }
+}
+function setDownload(url) {
+  const a = $('download');
+  if (url) {
+    a.href = url; a.setAttribute('aria-disabled', 'false'); a.removeAttribute('tabindex');
+    a.style.opacity = ''; a.style.pointerEvents = '';
+  } else {
+    a.removeAttribute('href'); a.setAttribute('aria-disabled', 'true'); a.tabIndex = -1;
+    a.style.opacity = '.4'; a.style.pointerEvents = 'none';
+  }
+}
+
+// ───────── Compilar en GitHub Actions ─────────
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const SETTINGS = [
+  'pluginManagement {',
+  '\trepositories {',
+  "\t\tmaven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }",
+  '\t\tmavenCentral()',
+  '\t\tgradlePluginPortal()',
+  '\t}',
+  '}',
+  ''
+].join('\n');
+
+function javaFor(mc) {
+  const m = /^1\.(\d+)(?:\.(\d+))?/.exec(mc);
+  if (!m) return 25;
+  const minor = +m[1], patch = +(m[2] || 0);
+  if (minor > 20 || (minor === 20 && patch >= 5)) return 21;
+  if (minor >= 18) return 17;
+  if (minor === 17) return 16;
+  return 8;
+}
+function cleanRel(p) {
+  const parts = String(p || '').replace(/\\/g, '/').trim().split('/').filter((x) => x && x !== '.');
+  if (!parts.length || parts.includes('..')) throw new Error(`Ruta no válida: "${p}"`);
+  return parts.join('/');
+}
+function renderProps(c) {
+  return [
+    'org.gradle.jvmargs=-Xmx2G',
+    'org.gradle.parallel=true',
+    'org.gradle.configuration-cache=false',
+    '',
+    `minecraft_version=${c.minecraft}`,
+    c.mappings === 'yarn' ? `yarn_mappings=${c.yarn}` : '# mappings oficiales de Mojang',
+    `loader_version=${c.loader}`,
+    `loom_version=${c.loom}`,
+    '',
+    `mod_version=${c.version}`,
+    'maven_group=com.generated',
+    `archives_base_name=${c.modId}`,
+    '',
+    `fabric_version=${c.api}`,
+    ''
+  ].join('\n');
+}
+function renderBuildGradle(c, libNames, jv) {
+  const shade = c.libMode === 'shade' && libNames.length > 0;
+  const L = [];
+  L.push('plugins {', '\tid \'fabric-loom\' version "${loom_version}"', '\tid \'maven-publish\'', '}', '');
+  L.push('version = project.mod_version', 'group = project.maven_group', '');
+  L.push('base {', '\tarchivesName = project.archives_base_name', '}', '');
+  L.push('repositories {', '\tmavenCentral()', '}', '');
+  if (shade) L.push('configurations {', '\tshade', '\timplementation.extendsFrom shade', '}', '');
+  L.push('dependencies {');
+  L.push('\tminecraft "com.mojang:minecraft:${project.minecraft_version}"');
+  L.push(c.mappings === 'yarn' ? '\tmappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"' : '\tmappings loom.officialMojangMappings()');
+  L.push('\tmodImplementation "net.fabricmc:fabric-loader:${project.loader_version}"');
+  L.push('\tmodImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"');
+  if (libNames.length) {
+    const conf = shade ? 'shade' : c.libMode === 'mod' ? 'modImplementation' : 'implementation';
+    L.push(`\t${conf} files(${libNames.map((n) => `'libs/${n}'`).join(', ')})`);
+  }
+  L.push('}', '');
+  L.push('tasks.withType(JavaCompile).configureEach {', '\tit.options.encoding = "UTF-8"', `\tit.options.release = ${jv}`, '}', '');
+  L.push('java {', '\twithSourcesJar()', `\tsourceCompatibility = JavaVersion.toVersion(${jv})`, `\ttargetCompatibility = JavaVersion.toVersion(${jv})`, '}');
+  if (shade) {
+    L.push('', 'jar {', '\tduplicatesStrategy = DuplicatesStrategy.EXCLUDE', '\tfrom({',
+      '\t\tconfigurations.shade.collect { it.isDirectory() ? it : zipTree(it) }', '\t}) {',
+      "\t\texclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'", '\t}', '}');
+  }
+  L.push('');
+  return L.join('\n');
+}
+
+function validate() {
+  if (!/^[a-z][a-z0-9_-]{1,63}$/.test($('mod_id').value.trim())) return 'mod_id: usa minúsculas, números, _ o -, y empieza por una letra.';
+  for (const id of ['version', 'minecraft_version', 'fabric_loader_version', 'fabric_api_version']) {
+    if (!/^[0-9A-Za-z][0-9A-Za-z.+_-]{0,63}$/.test($(id).value.trim())) return `${id}: valor vacío o con caracteres no permitidos.`;
+  }
+  if ($('mappings').value === 'yarn' && !$('yarn_mappings').value.trim()) return 'Indica la versión de Yarn (opciones avanzadas) o cambia a mappings de Mojang.';
+  if (!state.java.length) return 'Sube al menos un archivo .java.';
+  if (!checkJson()) return 'fabric.mod.json no es un JSON válido.';
+  return '';
+}
+
+function setLog(text) {
+  const lines = text.replace(/\r/g, '').split('\n').map((l) => l.replace(/^\d{4}-\d\d-\d\dT[\d:.]+Z /, '').split('/tmp/proj/').join(''));
+  con.replaceChildren();
+  pending = [];
+  lines.slice(-MAX_LINES).forEach((l) => addLine(l));
+}
+function extractErrors(text) {
+  const out = [];
+  let wrong = false, after = 0;
+  for (const raw of text.replace(/\r/g, '').split('\n')) {
+    const l = raw.replace(/^\d{4}-\d\d-\d\dT[\d:.]+Z /, '').split('/tmp/proj/').join('');
+    if (/^\* What went wrong:/.test(l)) { wrong = true; out.push(l); continue; }
+    if (/^\* Try:/.test(l)) { wrong = false; continue; }
+    if (wrong) { out.push(l); continue; }
+    if (/: error:|^error:/i.test(l)) { out.push(l); after = 2; continue; }
+    if (after > 0) { out.push(l); after--; }
+    if (out.length > 200) break;
+  }
+  return out.join('\n').trim();
+}
+async function liveLog(repo, jobId) {
+  try {
+    const { token } = ghCfg();
+    const res = await fetch(`${GH_API}/repos/${repo}/actions/jobs/${jobId}/logs`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }, cache: 'no-store'
+    });
+    return res.ok ? await res.text() : null;
+  } catch { return null; }
+}
+
+async function watchRun(repo, id, branch) {
+  const deadline = Date.now() + 40 * 60 * 1000;
+  let run = null;
+  addLine('Esperando a que GitHub inicie la compilación…', 'info');
+  for (let i = 0; i < 25 && !run; i++) {
+    await sleep(3000);
+    const d = await gh(`/repos/${repo}/actions/workflows/build.yml/runs?event=workflow_dispatch&per_page=10`);
+    run = d.workflow_runs.find((r) => (r.display_title || r.name || '').includes(id));
+  }
+  if (!run) throw new Error('GitHub no inició el workflow. Revisa la pestaña Actions del repositorio.');
+  addLine(`Ejecución iniciada: ${run.html_url}`, 'info');
+
+  const seen = {};
+  let live = false, lastLen = -1, last = run;
+  for (;;) {
+    if (Date.now() > deadline) throw new Error('Tiempo de espera agotado (40 min).');
+    last = await gh(`/repos/${repo}/actions/runs/${run.id}`);
+    if (last.status === 'in_progress') setStatus('running');
+    const job = (await gh(`/repos/${repo}/actions/runs/${run.id}/jobs`)).jobs[0];
+    if (job) {
+      if (!live) {
+        for (const s of job.steps || []) {
+          const st = s.status === 'completed' ? s.conclusion : s.status === 'in_progress' ? 'en curso' : '';
+          if (st && seen[s.name] !== st) { seen[s.name] = st; addLine(`[${st}] ${s.name}`, 'info'); }
+        }
+      }
+      if (last.status === 'in_progress') {
+        const t = await liveLog(repo, job.id);
+        if (t !== null && t.length !== lastLen) { live = true; lastLen = t.length; setLog(t); }
+      }
+    }
+    if (last.status === 'completed') break;
+    await sleep(4000);
+  }
+
+  const base = `/repos/${repo}/contents/results/${id}`;
+  const q = `?ref=${encodeURIComponent(branch)}`;
+  const text = async (name) => (await (await gh(`${base}/${name}${q}`, { accept: RAW, raw: true })).text());
+  let status = 'failed', logText = '';
+  try { status = (await text('status.txt')).trim(); } catch {}
+  try { logText = await text('build.log'); } catch {}
+  if (logText) setLog(logText);
+
+  if (status === 'success') {
+    let name = 'mod.jar';
+    try { name = (await text('jar-name.txt')).trim() || name; } catch {}
+    const blob = await (await gh(`${base}/mod.jar${q}`, { accept: RAW, raw: true })).blob();
+    return { success: true, name, size: blob.size, url: URL.createObjectURL(blob) };
+  }
+  return { success: false, errors: extractErrors(logText) || `La ejecución terminó con estado "${last.conclusion}". Revisa ${run.html_url}` };
+}
+
+async function compile() {
+  if (state.busy) return;
+  const fm = $('formMsg');
+  fm.className = 'mt-3 min-h-[1.25rem] text-sm text-bad';
+  const err = validate();
+  if (err) { fm.textContent = err; return; }
+  fm.textContent = '';
+  if (!$('modJson').value.trim()) autogen();
+  let repo;
+  try { repo = ghCfg().repo; } catch (e) { fm.textContent = e.message; return; }
+
+  con.replaceChildren();
+  pending = [];
+  stick = true;
+  $('errBox').classList.add('hidden');
+  $('jarInfo').textContent = '';
+  $('timer').textContent = '';
+  setDownload(null);
+  setStatus('queued');
+
+  const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  try {
+    const val = (k) => $(k).value.trim();
+    const mc = val('minecraft_version');
+    const jv = parseInt(val('java_version'), 10) || javaFor(mc);
+    const c = {
+      modId: val('mod_id'), version: val('version'), minecraft: mc, loader: val('fabric_loader_version'), api: val('fabric_api_version'),
+      mappings: val('mappings'), yarn: val('yarn_mappings'), loom: val('loom_version') || '1.9-SNAPSHOT', libMode: val('lib_mode')
+    };
+
+    addLine('Empaquetando el proyecto…', 'info');
+    const zip = new JSZip();
+    const libNames = [];
+    for (const l of state.libs) {
+      let n = l.file.name.replace(/[^A-Za-z0-9._-]/g, '_');
+      while (libNames.includes(n)) n = '_' + n;
+      libNames.push(n);
+      zip.file('libs/' + n, l.file);
+    }
+    zip.file('build.gradle', renderBuildGradle(c, libNames, jv));
+    zip.file('gradle.properties', renderProps(c));
+    zip.file('settings.gradle', SETTINGS);
+    for (const j of state.java) zip.file('src/main/java/' + cleanRel(joinPath(j.dir, j.file.name)), j.file);
+    for (const r of state.res) zip.file('src/main/resources/' + cleanRel(r.path), r.file);
+    for (const z of state.zips) zip.file('resource-zips/' + z.file.name.replace(/[^A-Za-z0-9._-]/g, '_'), z.file);
+    zip.file('src/main/resources/fabric.mod.json', $('modJson').value.split('${version}').join(c.version));
+
+    const b64 = await zip.generateAsync({ type: 'base64', compression: 'DEFLATE' });
+    const bytes = b64.length * 0.75;
+    if (bytes > 50 * 1024 * 1024) throw new Error('El paquete supera ~50 MB y GitHub no lo aceptará. Quita archivos pesados.');
+
+    const info = await gh(`/repos/${repo}`);
+    const branch = info.default_branch;
+    addLine(`Subiendo ${fmtSize(bytes)} a ${repo}…`, 'info');
+    await putFile(repo, `jobs/${id}.zip`, b64, `Trabajo ${id}`, branch);
+
+    try {
+      await gh(`/repos/${repo}/actions/workflows/build.yml/dispatches`, {
+        method: 'POST',
+        body: { ref: branch, inputs: { job_id: id, java: String(jv), gradle: val('gradle_version') || '8.12.1' } }
+      });
+    } catch (e) {
+      if (e.status === 404) throw new Error('No se encontró el workflow en el repositorio. Pulsa «Instalar el workflow en el repositorio».');
+      throw e;
+    }
+
+    const out = await watchRun(repo, id, branch);
+    if (out.success) {
+      setStatus('success');
+      setDownload(out.url);
+      $('download').download = out.name;
+      $('jarInfo').textContent = `${out.name} (${fmtSize(out.size)}) listo para descargar.`;
+    } else {
+      setStatus('failed');
+      $('errText').textContent = out.errors;
+      $('errBox').classList.remove('hidden');
+    }
+    flushLines();
+  } catch (e) {
+    addLine(e.message, 'error');
+    fm.textContent = e.message;
+    setStatus('failed');
+  }
+}
+
+$('compile').addEventListener('click', compile);
+$('download').addEventListener('click', (e) => { if ($('download').getAttribute('aria-disabled') === 'true') e.preventDefault(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+name: Compilar mod de Fabric
+run-name: build ${{ inputs.job_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: Identificador del trabajo (lo genera la pagina)
+        required: true
+        type: string
+      java:
+        description: Version de Java
+        required: false
+        default: '21'
+        type: string
+      gradle:
+        description: Version de Gradle
+        required: false
+        default: '8.12.1'
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fabric-build
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      JOB_ID: ${{ inputs.job_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ inputs.java }}
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ inputs.gradle }}
+
+      - name: Preparar proyecto
+        run: |
+          mkdir -p /tmp/proj
+          unzip -q "jobs/${JOB_ID}.zip" -d /tmp/proj
+          if [ -d /tmp/proj/resource-zips ]; then
+            mkdir -p /tmp/proj/src/main/resources
+            for z in /tmp/proj/resource-zips/*.zip; do
+              if [ -e "$z" ]; then unzip -qo "$z" -d /tmp/proj/src/main/resources; fi
+            done
+          fi
+
+      - name: Compilar con Gradle
+        id: build
+        working-directory: /tmp/proj
+        run: gradle build --console=plain --no-daemon 2>&1 | tee /tmp/build.log
+
+      - name: Guardar resultado
+        if: always()
+        env:
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          out="results/${JOB_ID}"
+          mkdir -p "$out"
+          if [ -f /tmp/build.log ]; then
+            cp /tmp/build.log "$out/build.log"
+          else
+            echo "No se llego a compilar. Revisa el paso 'Preparar proyecto' en la pestana Actions." > "$out/build.log"
+          fi
+          jar=$(ls /tmp/proj/build/libs/*.jar 2>/dev/null | grep -v -e '-sources.jar' -e '-javadoc.jar' | head -n1 || true)
+          if [ "$BUILD_OUTCOME" = "success" ] && [ -n "$jar" ]; then
+            cp "$jar" "$out/mod.jar"
+            basename "$jar" > "$out/jar-name.txt"
+            echo success > "$out/status.txt"
+          else
+            echo failed > "$out/status.txt"
+          fi
+          git rm -q --ignore-unmatch "jobs/${JOB_ID}.zip"
+          ls -1 results | sort -r | tail -n +6 | while read -r d; do git rm -rqf "results/$d"; done
+          git config user.name "fabric-builder"
+          git config user.email "fabric-builder@users.noreply.github.com"
+          git add -A results
+          git commit -qm "Resultado ${JOB_ID}"
+          git pull -q --rebase origin "$BRANCH" || true
+          git push -q origin "HEAD:$BRANCH"
