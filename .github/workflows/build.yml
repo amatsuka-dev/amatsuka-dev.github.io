@@ -44,11 +44,10 @@ jobs:
           distribution: temurin
           java-version: ${{ inputs.java }}
 
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: ${{ inputs.gradle }}
-
       - name: Preparar proyecto
+        id: prep
+        env:
+          GRADLE_IN: ${{ inputs.gradle }}
         run: |
           mkdir -p /tmp/proj
           unzip -q "jobs/${JOB_ID}.zip" -d /tmp/proj
@@ -58,6 +57,19 @@ jobs:
               if [ -e "$z" ]; then unzip -qo "$z" -d /tmp/proj/src/main/resources; fi
             done
           fi
+          gradle_ver="$GRADLE_IN"
+          bg=/tmp/proj/build.gradle
+          loom18="(id ['\"]fabric-loom['\"] version ['\"])1\.8[-.][^'\"]*"
+          if [ -f "$bg" ] && grep -qE "$loom18" "$bg"; then
+            sed -i -E "s/$loom18/\11.9-SNAPSHOT/" "$bg"
+            gradle_ver=8.12.1
+            echo "Loom 1.8 detectado: se compila con Loom 1.9 y Gradle $gradle_ver"
+          fi
+          echo "gradle=$gradle_ver" >> "$GITHUB_OUTPUT"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ steps.prep.outputs.gradle }}
 
       - name: Compilar con Gradle
         id: build
