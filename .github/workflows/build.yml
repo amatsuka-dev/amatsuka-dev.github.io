@@ -91,6 +91,20 @@ jobs:
           else
             echo failed > "$out/status.txt"
           fi
+          {
+            echo
+            echo "===== DIAGNOSTICO ====="
+            echo "--- Archivos que recibio GitHub ---"
+            (cd /tmp/proj && find . -type f ! -path './.gradle/*' ! -path './build/*' | sort | head -n 150) || true
+            echo "--- build.gradle ---"
+            cat /tmp/proj/build.gradle /tmp/proj/build.gradle.kts 2>/dev/null || true
+            echo "--- .jar generados ---"
+            find /tmp/proj -name '*.jar' -path '*/build/*' 2>/dev/null | sort | head -n 20 | while read -r j; do
+              echo "## $j"
+              unzip -l "$j" | head -n 30 || true
+            done
+            echo "===== FIN DIAGNOSTICO ====="
+          } >> "$out/build.log"
           git rm -q --ignore-unmatch "jobs/${JOB_ID}.zip"
           ls -1 results | sort -r | tail -n +6 | while read -r d; do git rm -rqf "results/$d"; done
           git config user.name "fabric-builder"
