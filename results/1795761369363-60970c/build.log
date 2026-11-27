@@ -1,0 +1,322 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.9.2
+:remapping 50 mods from modImplementation (java-api)
+
+> Task :compileJava
+> Task :processResources
+> Task :classes
+> Task :jar
+> Task :compileTestJava NO-SOURCE
+> Task :processIncludeJars
+> Task :sourcesJar
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :validateAccessWidener NO-SOURCE
+> Task :check UP-TO-DATE
+> Task :remapJar
+> Task :remapSourcesJar
+> Task :assemble
+> Task :build
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1795761398637.json
+
+[Incubating] Problems report is available at: file:///tmp/proj/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 22s
+7 actionable tasks: 7 executed
+
+===== DIAGNOSTICO =====
+--- Archivos que recibio GitHub ---
+./README.md
+./build.gradle
+./gradle.properties
+./settings.gradle
+./src/main/java/com/morphzuka/Gestures.java
+./src/main/java/com/morphzuka/HitboxOverride.java
+./src/main/java/com/morphzuka/MorphZukaClient.java
+./src/main/java/com/morphzuka/Role.java
+./src/main/java/com/morphzuka/compat/SvcPlugin.java
+./src/main/java/com/morphzuka/mixin/CameraMixin.java
+./src/main/java/com/morphzuka/mixin/LivingEntityRendererMixin.java
+./src/main/java/com/morphzuka/mixin/PlayerDimensionsMixin.java
+./src/main/java/com/morphzuka/mixin/PlayerEntityRendererMixin.java
+./src/main/java/com/morphzuka/model/AnimIO.java
+./src/main/java/com/morphzuka/model/AnimStates.java
+./src/main/java/com/morphzuka/model/BBModel.java
+./src/main/java/com/morphzuka/model/ModelImporter.java
+./src/main/java/com/morphzuka/model/ModelLoader.java
+./src/main/java/com/morphzuka/model/ModelManager.java
+./src/main/java/com/morphzuka/render/BBRenderer.java
+./src/main/java/com/morphzuka/render/MorphManager.java
+./src/main/java/com/morphzuka/render/Transition.java
+./src/main/java/com/morphzuka/screen/EditorScreen.java
+./src/main/java/com/morphzuka/screen/ModelScreen.java
+./src/main/java/com/morphzuka/screen/RadialScreen.java
+./src/main/java/com/morphzuka/screen/SliderScreen.java
+./src/main/java/com/morphzuka/ui/Background.java
+./src/main/java/com/morphzuka/ui/Theme.java
+./src/main/java/com/morphzuka/ui/VideoDecoder.java
+./src/main/java/com/morphzuka/ui/VideoLoader.java
+./src/main/java/com/morphzuka/voice/VoiceState.java
+./src/main/resources/assets/morphzuka/lang/en_us.json
+./src/main/resources/assets/morphzuka/lang/es_es.json
+./src/main/resources/fabric.mod.json
+./src/main/resources/morphzuka.mixins.json
+--- build.gradle ---
+plugins {
+    id 'fabric-loom' version '1.9-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base { archivesName = project.archives_base_name }
+
+def withVoice = project.withVoice.toBoolean()
+def withVideo = project.withVideo.toBoolean()
+
+repositories {
+    mavenCentral()
+    maven { name = 'MaxHenkel'; url = 'https://maven.maxhenkel.de/repository/public' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Simple Voice Chat (API de plugins): solo para compilar; el mod real es opcional en runtime
+    if (withVoice) modCompileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+
+    // JCodec (mp4/H.264 en Java puro) para fondos de video; va empaquetado dentro del jar
+    if (withVideo) {
+        implementation "org.jcodec:jcodec:${project.jcodec_version}"
+        implementation "org.jcodec:jcodec-javase:${project.jcodec_version}"
+        include "org.jcodec:jcodec:${project.jcodec_version}"
+        include "org.jcodec:jcodec-javase:${project.jcodec_version}"
+    }
+}
+
+sourceSets.main.java {
+    if (!withVoice) exclude 'com/morphzuka/compat/**'
+    if (!withVideo) exclude 'com/morphzuka/ui/VideoDecoder.java'
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") { expand "version": project.version }
+}
+
+tasks.withType(JavaCompile).configureEach { it.options.release = 21; it.options.encoding = 'UTF-8' }
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+--- Version de Gradle ---
+Gradle 8.12.1
+--- Recursos procesados ---
+build/resources/main/assets/morphzuka/lang/en_us.json
+build/resources/main/assets/morphzuka/lang/es_es.json
+build/resources/main/fabric.mod.json
+build/resources/main/morphzuka.mixins.json
+--- .jar generados ---
+## /tmp/proj/build/devlibs/morphzuka-2.3.0-dev.jar
+Archive:  /tmp/proj/build/devlibs/morphzuka-2.3.0-dev.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2026-11-27 06:36   META-INF/
+       25  2026-11-27 06:36   META-INF/MANIFEST.MF
+        0  2026-11-27 06:36   com/
+        0  2026-11-27 06:36   com/morphzuka/
+     2742  2026-11-27 06:36   com/morphzuka/Role.class
+        0  2026-11-27 06:36   com/morphzuka/render/
+     1269  2026-11-27 06:36   com/morphzuka/render/BBRenderer$1.class
+      738  2026-11-27 06:36   com/morphzuka/render/BBRenderer$Track.class
+      847  2026-11-27 06:36   com/morphzuka/render/MorphManager$State.class
+    30808  2026-11-27 06:36   com/morphzuka/render/BBRenderer.class
+     1368  2026-11-27 06:36   com/morphzuka/render/BBRenderer$Ctx.class
+     1290  2026-11-27 06:36   com/morphzuka/render/MorphManager$Kind.class
+    13503  2026-11-27 06:36   com/morphzuka/render/MorphManager.class
+     1792  2026-11-27 06:36   com/morphzuka/render/BBRenderer$Layer.class
+     2278  2026-11-27 06:36   com/morphzuka/render/Transition.class
+        0  2026-11-27 06:36   com/morphzuka/model/
+      885  2026-11-27 06:36   com/morphzuka/model/BBModel$Bone.class
+     1285  2026-11-27 06:36   com/morphzuka/model/ModelManager$Settings.class
+     1907  2026-11-27 06:36   com/morphzuka/model/ModelManager$Active.class
+    26389  2026-11-27 06:36   com/morphzuka/model/ModelLoader.class
+      751  2026-11-27 06:36   com/morphzuka/model/BBModel$Cube.class
+     6219  2026-11-27 06:36   com/morphzuka/model/AnimIO.class
+     2105  2026-11-27 06:36   com/morphzuka/model/AnimStates$Def.class
+      706  2026-11-27 06:36   com/morphzuka/model/BBModel$Anim.class
+     1665  2026-11-27 06:36   com/morphzuka/model/ModelImporter$Result.class
+     9265  2026-11-27 06:36   com/morphzuka/model/ModelImporter.class
+     2439  2026-11-27 06:36   com/morphzuka/model/BBModel.class
+## /tmp/proj/build/devlibs/morphzuka-2.3.0-sources.jar
+Archive:  /tmp/proj/build/devlibs/morphzuka-2.3.0-sources.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2026-11-27 06:36   META-INF/
+       25  2026-11-27 06:36   META-INF/MANIFEST.MF
+        0  2026-11-27 06:36   assets/
+        0  2026-11-27 06:36   assets/morphzuka/
+        0  2026-11-27 06:36   assets/morphzuka/lang/
+      304  2026-11-27 06:36   assets/morphzuka/lang/en_us.json
+      319  2026-11-27 06:36   assets/morphzuka/lang/es_es.json
+      418  2026-11-27 06:36   fabric.mod.json
+      269  2026-11-27 06:36   morphzuka.mixins.json
+        0  2026-11-27 06:36   com/
+        0  2026-11-27 06:36   com/morphzuka/
+    16626  2026-11-27 06:36   com/morphzuka/MorphZukaClient.java
+     1400  2026-11-27 06:36   com/morphzuka/HitboxOverride.java
+        0  2026-11-27 06:36   com/morphzuka/render/
+     8495  2026-11-27 06:36   com/morphzuka/render/MorphManager.java
+    24501  2026-11-27 06:36   com/morphzuka/render/BBRenderer.java
+     1653  2026-11-27 06:36   com/morphzuka/render/Transition.java
+        0  2026-11-27 06:36   com/morphzuka/model/
+     5182  2026-11-27 06:36   com/morphzuka/model/ModelImporter.java
+     6589  2026-11-27 06:36   com/morphzuka/model/AnimStates.java
+    20960  2026-11-27 06:36   com/morphzuka/model/ModelLoader.java
+     2475  2026-11-27 06:36   com/morphzuka/model/BBModel.java
+     2916  2026-11-27 06:36   com/morphzuka/model/AnimIO.java
+    11517  2026-11-27 06:36   com/morphzuka/model/ModelManager.java
+        0  2026-11-27 06:36   com/morphzuka/ui/
+     2165  2026-11-27 06:36   com/morphzuka/ui/VideoDecoder.java
+    10012  2026-11-27 06:36   com/morphzuka/ui/Background.java
+## /tmp/proj/build/libs/morphzuka-2.3.0-sources.jar
+Archive:  /tmp/proj/build/libs/morphzuka-2.3.0-sources.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      377  2026-11-27 06:36   META-INF/MANIFEST.MF
+        0  2026-11-27 06:36   com/
+        0  2026-11-27 06:36   com/morphzuka/
+    16556  2026-11-27 06:36   com/morphzuka/MorphZukaClient.java
+     1332  2026-11-27 06:36   com/morphzuka/HitboxOverride.java
+        0  2026-11-27 06:36   com/morphzuka/render/
+     8382  2026-11-27 06:36   com/morphzuka/render/MorphManager.java
+    24744  2026-11-27 06:36   com/morphzuka/render/BBRenderer.java
+     1651  2026-11-27 06:36   com/morphzuka/render/Transition.java
+        0  2026-11-27 06:36   com/morphzuka/model/
+     5182  2026-11-27 06:36   com/morphzuka/model/ModelImporter.java
+     6589  2026-11-27 06:36   com/morphzuka/model/AnimStates.java
+    20880  2026-11-27 06:36   com/morphzuka/model/ModelLoader.java
+     2479  2026-11-27 06:36   com/morphzuka/model/BBModel.java
+     2916  2026-11-27 06:36   com/morphzuka/model/AnimIO.java
+    11418  2026-11-27 06:36   com/morphzuka/model/ModelManager.java
+        0  2026-11-27 06:36   com/morphzuka/ui/
+     2165  2026-11-27 06:36   com/morphzuka/ui/VideoDecoder.java
+     9871  2026-11-27 06:36   com/morphzuka/ui/Background.java
+     3649  2026-11-27 06:36   com/morphzuka/ui/Theme.java
+      478  2026-11-27 06:36   com/morphzuka/ui/VideoLoader.java
+        0  2026-11-27 06:36   com/morphzuka/compat/
+     1469  2026-11-27 06:36   com/morphzuka/compat/SvcPlugin.java
+        0  2026-11-27 06:36   com/morphzuka/voice/
+      737  2026-11-27 06:36   com/morphzuka/voice/VoiceState.java
+     1657  2026-11-27 06:36   com/morphzuka/Gestures.java
+        0  2026-11-27 06:36   com/morphzuka/mixin/
+## /tmp/proj/build/libs/morphzuka-2.3.0.jar
+Archive:  /tmp/proj/build/libs/morphzuka-2.3.0.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      414  1980-01-01 00:00   META-INF/MANIFEST.MF
+        0  1980-01-01 00:00   META-INF/
+        0  1980-01-01 00:00   META-INF/jars/
+  2084640  1980-01-01 00:00   META-INF/jars/jcodec-0.2.5.jar
+    14421  1980-01-01 00:00   META-INF/jars/jcodec-javase-0.2.5.jar
+        0  1980-01-01 00:00   assets/
+        0  1980-01-01 00:00   assets/morphzuka/
+        0  1980-01-01 00:00   assets/morphzuka/lang/
+      304  1980-01-01 00:00   assets/morphzuka/lang/en_us.json
+      319  1980-01-01 00:00   assets/morphzuka/lang/es_es.json
+        0  1980-01-01 00:00   com/
+        0  1980-01-01 00:00   com/morphzuka/
+     1944  1980-01-01 00:00   com/morphzuka/Gestures.class
+     1771  1980-01-01 00:00   com/morphzuka/HitboxOverride.class
+    25922  1980-01-01 00:00   com/morphzuka/MorphZukaClient.class
+     2764  1980-01-01 00:00   com/morphzuka/Role.class
+        0  1980-01-01 00:00   com/morphzuka/compat/
+     3133  1980-01-01 00:00   com/morphzuka/compat/SvcPlugin.class
+        0  1980-01-01 00:00   com/morphzuka/mixin/
+     1166  1980-01-01 00:00   com/morphzuka/mixin/CameraMixin.class
+     3230  1980-01-01 00:00   com/morphzuka/mixin/LivingEntityRendererMixin.class
+     2099  1980-01-01 00:00   com/morphzuka/mixin/PlayerDimensionsMixin.class
+     2111  1980-01-01 00:00   com/morphzuka/mixin/PlayerEntityRendererMixin.class
+        0  1980-01-01 00:00   com/morphzuka/model/
+     6284  1980-01-01 00:00   com/morphzuka/model/AnimIO.class
+     2116  1980-01-01 00:00   com/morphzuka/model/AnimStates$Def.class
+     1264  1980-01-01 00:00   com/morphzuka/model/AnimStates$Kind.class
+## /tmp/proj/build/processIncludeJars/jcodec-0.2.5.jar
+Archive:  /tmp/proj/build/processIncludeJars/jcodec-0.2.5.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2019-06-15 22:26   META-INF/
+      288  2019-06-15 22:26   META-INF/MANIFEST.MF
+        0  2019-06-15 22:25   net/
+        0  2019-06-15 22:25   net/sourceforge/
+        0  2019-06-15 22:25   net/sourceforge/jaad/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/error/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/filterbank/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/gain/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/huffman/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/ps/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/sbr/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/syntax/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/tools/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/transport/
+        0  2019-06-15 22:25   org/
+        0  2019-06-15 22:25   org/jcodec/
+        0  2019-06-15 22:25   org/jcodec/algo/
+        0  2019-06-15 22:25   org/jcodec/api/
+        0  2019-06-15 22:25   org/jcodec/api/specific/
+        0  2019-06-15 22:25   org/jcodec/api/transcode/
+        0  2019-06-15 22:25   org/jcodec/api/transcode/filters/
+        0  2019-06-15 22:25   org/jcodec/audio/
+        0  2019-06-15 22:25   org/jcodec/codecs/
+        0  2019-06-15 22:25   org/jcodec/codecs/aac/
+        0  2019-06-15 22:25   org/jcodec/codecs/aac/blocks/
+        0  2019-06-15 22:25   org/jcodec/codecs/common/
+## /tmp/proj/build/processIncludeJars/jcodec-javase-0.2.5.jar
+Archive:  /tmp/proj/build/processIncludeJars/jcodec-javase-0.2.5.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2019-06-15 22:31   META-INF/
+      130  2019-06-15 22:31   META-INF/MANIFEST.MF
+        0  2019-06-15 22:31   org/
+        0  2019-06-15 22:31   org/jcodec/
+        0  2019-06-15 22:31   org/jcodec/api/
+        0  2019-06-15 22:31   org/jcodec/api/awt/
+        0  2019-06-15 22:31   org/jcodec/api/transcode/
+        0  2019-06-15 22:31   org/jcodec/api/transcode/filter/
+        0  2019-06-15 22:31   org/jcodec/codecs/
+        0  2019-06-15 22:31   org/jcodec/codecs/pngawt/
+        0  2019-06-15 22:31   org/jcodec/common/
+        0  2019-06-15 22:31   org/jcodec/scale/
+     4392  2019-06-15 22:31   org/jcodec/api/awt/AWTFrameGrab.class
+     2144  2019-06-15 22:31   org/jcodec/api/awt/AWTSequenceEncoder.class
+     2852  2019-06-15 22:31   org/jcodec/api/awt/SequenceMuxer.class
+     1869  2019-06-15 22:31   org/jcodec/api/transcode/filter/AWTFilter.class
+     1714  2019-06-15 22:31   org/jcodec/codecs/pngawt/PNGDecoder.class
+     2796  2019-06-15 22:31   org/jcodec/codecs/pngawt/PNGEncoder.class
+      648  2019-06-15 22:31   org/jcodec/common/SoundUtil.class
+     5917  2019-06-15 22:31   org/jcodec/scale/AWTUtil.class
+        0  2019-06-15 22:31   META-INF/maven/
+        0  2019-06-15 22:31   META-INF/maven/org.jcodec/
+        0  2019-06-15 22:31   META-INF/maven/org.jcodec/jcodec-javase/
+     3381  2019-06-15 22:31   META-INF/maven/org.jcodec/jcodec-javase/pom.xml
+      108  2019-06-15 22:31   META-INF/maven/org.jcodec/jcodec-javase/pom.properties
+      162  1980-01-01 00:00   fabric.mod.json
+---------                     -------
+===== FIN DIAGNOSTICO =====
