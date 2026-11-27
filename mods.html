@@ -348,11 +348,10 @@ jobs:
           distribution: temurin
           java-version: ${{ inputs.java }}
 
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: ${{ inputs.gradle }}
-
       - name: Preparar proyecto
+        id: prep
+        env:
+          GRADLE_IN: ${{ inputs.gradle }}
         run: |
           mkdir -p /tmp/proj
           unzip -q "jobs/${JOB_ID}.zip" -d /tmp/proj
@@ -362,6 +361,19 @@ jobs:
               if [ -e "$z" ]; then unzip -qo "$z" -d /tmp/proj/src/main/resources; fi
             done
           fi
+          gradle_ver="$GRADLE_IN"
+          bg=/tmp/proj/build.gradle
+          loom18="(id ['\"]fabric-loom['\"] version ['\"])1\.8[-.][^'\"]*"
+          if [ -f "$bg" ] && grep -qE "$loom18" "$bg"; then
+            sed -i -E "s/$loom18/\11.9-SNAPSHOT/" "$bg"
+            gradle_ver=8.12.1
+            echo "Loom 1.8 detectado: se compila con Loom 1.9 y Gradle $gradle_ver"
+          fi
+          echo "gradle=$gradle_ver" >> "$GITHUB_OUTPUT"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ steps.prep.outputs.gradle }}
 
       - name: Compilar con Gradle
         id: build
@@ -827,6 +839,8 @@ async function loadProjectZip(file) {
   const txt = async (rel) => { const f = zip.file(root + rel); return f ? f.async('string') : null; };
 
   clearProject();
+  // No arrastrar clases de un proyecto anterior.
+  $('entry_main').value = ''; $('entry_client').value = '';
   for (const x of inRoot.filter((y) => /\.java$/.test(y.rel))) {
     if (/LOGGER\.info\("Hola desde /.test(await x.e.async('string'))) {
       note.textContent = 'Este .zip es la plantilla de ejemplo, no tu mod. No se cargó. Sube el .zip con tu código.';
@@ -867,9 +881,7 @@ async function loadProjectZip(file) {
     const gv = ((await txt('gradle/wrapper/gradle-wrapper.properties')) || '').match(/gradle-(\d+(?:\.\d+){1,2})-/);
     const jm = bg.match(/JavaVersion\.VERSION_(\d+)/) || bg.match(/release\s*=\s*(\d+)/) || bg.match(/JavaLanguageVersion\.of\((\d+)\)/);
     const files = await Promise.all(inRoot.map(async ({ e, rel }) => ({ path: rel, blob: await e.async('blob') })));
-    // Sin wrapper: Loom 1.8 se compila con Gradle 8.10.2 en vez del valor por defecto.
-    const oldLoom = /fabric-loom['"]\s*\)?\s*version\s*\(?\s*['"]1\.8[.-]/.test(bg);
-    state.project = { files, gradle: gv ? gv[1] : oldLoom ? '8.10.2' : null, java: jm && +jm[1] >= 8 ? +jm[1] : null, name: file.name };
+    state.project = { files, gradle: gv ? gv[1] : null, java: jm && +jm[1] >= 8 ? +jm[1] : null, name: file.name };
     // Muestra los .java y el fabric.mod.json en sus secciones; lo que edites ahí es lo que se compila.
     const managed = new Set();
     for (const { path, blob } of files) {
@@ -883,7 +895,12 @@ async function loadProjectZip(file) {
     if (jsonFile) { $('modJson').value = await jsonFile.blob.text(); managed.add(jsonPath); }
     state.project.managed = managed;
     // Solo se crea si es un proyecto de un único módulo que no lo trae.
-    if (!jsonFile && state.java.length && !files.some((f) => /(^|\/)fabric\.mod\.json$/.test(f.path))) autogen();
+    const single = canCheckClasses(files.map((f) => f.path));
+    let changes = [];
+    if (single && state.java.length) {
+      changes = await syncEntrypoints();
+      if (!jsonFile) autogen();
+    }
     renderJava(); checkJson();
     syncYarn(); saveForm();
     const nJava = inRoot.filter((x) => /\.java$/.test(x.rel)).length;
@@ -894,6 +911,7 @@ async function loadProjectZip(file) {
     ]);
     note.textContent = '';
     await showExplorer(inRoot);
+    if (changes.length) $('noteProj').textContent = 'Se corrigieron clases que no estaban en el .zip. ' + changes.join(' | ');
     return;
   }
 
@@ -915,6 +933,7 @@ async function loadProjectZip(file) {
   }
   if (!javaItems.length) { note.textContent = 'No encontré archivos .java dentro del .zip.'; return; }
   await addJava(javaItems);
+  const fixed = await syncEntrypoints();
   checkJson(); renderLibs(); syncYarn(); saveForm();
   showProj([
     `Código detectado en ${file.name}`,
@@ -922,7 +941,7 @@ async function loadProjectZip(file) {
     'Revisa los datos del mod abajo: si el .zip no traía versiones, tendrás que completarlas.'
   ]);
   await showExplorer(inRoot);
-  note.textContent = '';
+  note.textContent = fixed.length ? 'Se corrigieron clases que no estaban en el .zip. ' + fixed.join(' | ') : '';
 }
 wireDrop('dropProj', 'inProj', (items) => {
   const z = items.find((i) => /\.zip$/i.test(i.file.name));
@@ -1321,6 +1340,57 @@ function renderBuildGradle(c, libNames, jv) {
   return L.join('\n');
 }
 
+// Devuelve las clases de los entrypoints main/client que no están entre los .java.
+function missingEntrypoints(text, javaPaths) {
+  let ep;
+  try { ep = JSON.parse(text).entrypoints || {}; } catch { return []; }
+  return ['main', 'client'].flatMap((k) => (ep[k] || []).map((x) => String(typeof x === 'string' ? x : x.value).split('::')[0].split('$')[0]))
+    .filter((cls) => !javaPaths.includes(cls.replace(/\./g, '/') + '.java'));
+}
+
+// Ajusta los entrypoints a lo que realmente trae el .zip. Devuelve los cambios hechos.
+async function syncEntrypoints() {
+  const paths = [], found = { main: [], client: [] };
+  for (const j of state.java) {
+    const path = joinPath(j.dir, j.file.name);
+    paths.push(path);
+    const code = (await j.file.text()).replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+    const cls = j.file.name.replace(/\.java$/, '');
+    const head = (code.match(new RegExp('\\bclass\\s+' + cls + '\\b[^{]*')) || [''])[0];
+    const name = path.replace(/\.java$/, '').split('/').join('.');
+    if (/\bimplements\b[\s\S]*\bModInitializer\b/.test(head)) found.main.push(name);
+    if (/\bimplements\b[\s\S]*\bClientModInitializer\b/.test(head)) found.client.push(name);
+  }
+  const changes = [];
+  let json = null;
+  try { json = JSON.parse($('modJson').value); } catch {}
+  if (json) {
+    const ep = json.entrypoints || {};
+    const missing = missingEntrypoints($('modJson').value, paths);
+    let touched = false;
+    for (const k of ['main', 'client']) {
+      const list = ep[k] || [];
+      const keep = list.filter((x) => !missing.includes(String(typeof x === 'string' ? x : x.value).split('::')[0].split('$')[0]));
+      if (keep.length === list.length) continue;
+      const next = keep.length ? keep : found[k];
+      if (next.length) ep[k] = next; else delete ep[k];
+      changes.push(`${k}: ${next.map((x) => (typeof x === 'string' ? x : x.value)).join(', ') || 'se quitó'}`);
+      touched = true;
+    }
+    if (touched) { json.entrypoints = ep; $('modJson').value = JSON.stringify(json, null, 2); }
+  }
+  for (const k of ['main', 'client']) {
+    const first = json ? ((json.entrypoints || {})[k] || [])[0] : found[k][0];
+    $('entry_' + k).value = first ? (typeof first === 'string' ? first : first.value) : '';
+  }
+  checkJson(); saveForm();
+  return changes;
+}
+// true si todo el código está a la vista (sin Kotlin ni submódulos).
+function canCheckClasses(paths) {
+  return !paths.some((p) => /\.kt$/.test(p) || /.\/src\//.test(p.replace(/^src\//, '')));
+}
+
 function validate() {
   if (!/^[a-z][a-z0-9_-]{1,63}$/.test($('mod_id').value.trim())) return 'mod_id: usa minúsculas, números, _ o -, y empieza por una letra.';
   for (const id of ['version', 'minecraft_version', 'fabric_loader_version', 'fabric_api_version']) {
@@ -1424,6 +1494,17 @@ async function compile() {
   if (!state.project && !$('modJson').value.trim()) autogen();
   let repo;
   try { repo = ghCfg().repo; } catch (e) { fm.textContent = e.message; return; }
+
+  // Solo se comprueba cuando todo el código Java está a la vista (sin Kotlin ni submódulos).
+  const files = state.project ? state.project.files : [];
+  const checkable = !state.project || (state.project.managed && !files.some((f) => /\.kt$/.test(f.path) || /.\/src\//.test(f.path.replace(/^src\//, ''))));
+  if (checkable && state.java.length) {
+    const missing = missingEntrypoints($('modJson').value, state.java.map((j) => joinPath(j.dir, j.file.name)));
+    if (missing.length) {
+      fm.textContent = `fabric.mod.json pide clases que no están en tus .java: ${missing.join(', ')}. Quítalas o corrige el nombre.`;
+      return;
+    }
+  }
 
   con.replaceChildren();
   pending = [];
