@@ -372,7 +372,13 @@ jobs:
           else
             echo "No se llego a compilar. Revisa el paso 'Preparar proyecto' en la pestana Actions." > "$out/build.log"
           fi
-          jar=$(ls /tmp/proj/build/libs/*.jar 2>/dev/null | grep -v -e '-sources.jar' -e '-javadoc.jar' | head -n1 || true)
+          jar=""
+          while IFS= read -r j; do
+            if unzip -l "$j" fabric.mod.json >/dev/null 2>&1; then jar="$j"; break; fi
+          done < <(find /tmp/proj -path '*/build/libs/*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' 2>/dev/null | sort)
+          if [ "$BUILD_OUTCOME" = "success" ] && [ -z "$jar" ]; then
+            echo "error: se compilo, pero ningun .jar tiene fabric.mod.json en la raiz. Revisa que el proyecto sea de Fabric y que el archivo este en src/main/resources/." >> "$out/build.log"
+          fi
           if [ "$BUILD_OUTCOME" = "success" ] && [ -n "$jar" ]; then
             cp "$jar" "$out/mod.jar"
             basename "$jar" > "$out/jar-name.txt"
@@ -578,7 +584,9 @@ async function addJava(items) {
       main: /\bimplements\b[^{]*\bModInitializer\b/.test(src) ? fq : null,
       client: /\bimplements\b[^{]*\bClientModInitializer\b/.test(src) ? fq : null,
     };
-    state.java = state.java.filter((j) => !(j.dir === item.dir && j.file.name === file.name));
+    const old = state.java.find((j) => j.dir === item.dir && j.file.name === file.name);
+    if (old) item.src = old.src;
+    state.java = state.java.filter((j) => j !== old);
     state.java.push(item);
     if (item.main && !$('entry_main').value.trim()) $('entry_main').value = item.main;
     if (item.client && !$('entry_client').value.trim()) $('entry_client').value = item.client;
@@ -613,26 +621,37 @@ function checkJson() {
 }
 $('modJson').addEventListener('input', checkJson);
 
+// Estructura basada en scripts/src/lib/template/modjson.ts de github.com/FabricMC/fabricmc.net (MIT).
 function autogen() {
   const id = $('mod_id').value.trim(), mc = $('minecraft_version').value.trim();
+  const paths = [
+    ...(state.project ? state.project.files.map((f) => f.path) : []),
+    ...state.pres.map((r) => r.path), ...state.res.map((r) => r.path)
+  ].map((p) => p.replace(/^src\/(main|client)\/resources\//, ''));
+  const main = $('entry_main').value.trim(), client = $('entry_client').value.trim();
+  const entrypoints = {};
+  if (main) entrypoints.main = [main];
+  if (client) entrypoints.client = [client];
   const json = {
     schemaVersion: 1,
     id,
-    version: $('version').value.trim(),
+    version: state.project ? '${version}' : $('version').value.trim(),
     name: $('mod_name').value.trim() || id,
     description: '',
     authors: [],
-    license: 'All-Rights-Reserved',
-    environment: '*',
-    depends: { fabricloader: '>=' + $('fabric_loader_version').value.trim(), minecraft: '~' + mc, 'fabric-api': '*' }
+    license: 'All-Rights-Reserved'
   };
-  const main = $('entry_main').value.trim(), client = $('entry_client').value.trim();
-  if (main || client) {
-    json.entrypoints = {};
-    if (main) json.entrypoints.main = [main];
-    if (client) json.entrypoints.client = [client];
-  }
-  $('modJson').value = JSON.stringify(json, null, 2);
+  if (paths.includes(`assets/${id}/icon.png`)) json.icon = `assets/${id}/icon.png`;
+  json.environment = client && !main ? 'client' : '*';
+  json.entrypoints = entrypoints;
+  json.mixins = paths.filter((p) => /^[^/]+\.mixins\.json$/.test(p));
+  json.depends = {
+    fabricloader: '>=' + $('fabric_loader_version').value.trim(),
+    minecraft: '~' + mc,
+    java: '>=' + (parseInt($('java_version').value, 10) || javaFor(mc)),
+    'fabric-api': '*'
+  };
+  $('modJson').value = JSON.stringify(json, null, '\t');
   checkJson();
 }
 $('autogen').addEventListener('click', autogen);
@@ -777,12 +796,27 @@ async function loadProjectZip(file) {
     const jm = bg.match(/JavaVersion\.VERSION_(\d+)/) || bg.match(/release\s*=\s*(\d+)/) || bg.match(/JavaLanguageVersion\.of\((\d+)\)/);
     const files = await Promise.all(inRoot.map(async ({ e, rel }) => ({ path: rel, blob: await e.async('blob') })));
     state.project = { files, gradle: gv ? gv[1] : null, java: jm && +jm[1] >= 8 ? +jm[1] : null, name: file.name };
+    // Muestra los .java y el fabric.mod.json en sus secciones; lo que edites ahí es lo que se compila.
+    const managed = new Set();
+    for (const { path, blob } of files) {
+      const m = path.match(/^(src\/(?:main|client)\/java\/)(.*\.java)$/);
+      if (!m) continue;
+      state.java.push({ file: new File([blob], m[2].split('/').pop()), dir: dirOf(m[2]).replace(/\/?$/, '/').replace(/^\/$/, ''), src: m[1] });
+      managed.add(path);
+    }
+    const jsonPath = 'src/main/resources/fabric.mod.json';
+    const jsonFile = files.find((f) => f.path === jsonPath);
+    if (jsonFile) { $('modJson').value = await jsonFile.blob.text(); managed.add(jsonPath); }
+    state.project.managed = managed;
+    // Solo se crea si es un proyecto de un único módulo que no lo trae.
+    if (!jsonFile && state.java.length && !files.some((f) => /(^|\/)fabric\.mod\.json$/.test(f.path))) autogen();
+    renderJava(); checkJson();
     syncYarn(); saveForm();
     const nJava = inRoot.filter((x) => /\.java$/.test(x.rel)).length;
     showProj([
       `Proyecto de Gradle detectado en ${file.name}`,
       `${files.length} archivos (${nJava} .java). Minecraft ${$('minecraft_version').value}, Gradle ${state.project.gradle || 'por defecto'}, Java ${state.project.java || 'según Minecraft'}.`,
-      'Se compilará con los archivos de build del propio proyecto, así que las secciones de abajo se ignoran.'
+      'Se compilará con los archivos de build del propio proyecto. Los .java y el fabric.mod.json de abajo se pueden editar; las secciones de recursos y librerías se ignoran.'
     ]);
     note.textContent = '';
     return;
@@ -1337,7 +1371,16 @@ async function compile() {
     const zip = new JSZip();
     let gradleVer = val('gradle_version') || '8.12.1';
     if (state.project) {
-      for (const f of state.project.files) zip.file(f.path, f.blob);
+      const managed = state.project.managed;
+      for (const f of state.project.files) if (!managed || !managed.has(f.path)) zip.file(f.path, f.blob);
+      if (managed) {
+        for (const j of state.java) zip.file((j.src || 'src/main/java/') + cleanRel(joinPath(j.dir, j.file.name)), j.file);
+        const text = $('modJson').value;
+        if (text.trim()) {
+          if (!checkJson()) throw new Error('fabric.mod.json no es un JSON válido.');
+          zip.file('src/main/resources/fabric.mod.json', text);
+        }
+      }
       jv = state.project.java || jv;
       gradleVer = state.project.gradle || gradleVer;
     } else {
