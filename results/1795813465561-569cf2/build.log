@@ -1,0 +1,352 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.9.2
+:remapping 50 mods from modImplementation (java-api)
+
+> Task :compileJava
+Note: /tmp/proj/src/main/java/com/morphzuka/render/Surface.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :processResources
+> Task :classes
+> Task :jar
+> Task :compileTestJava NO-SOURCE
+> Task :processIncludeJars
+> Task :sourcesJar
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :validateAccessWidener NO-SOURCE
+> Task :check UP-TO-DATE
+> Task :remapJar
+> Task :remapSourcesJar
+> Task :assemble
+> Task :build
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1795813489081.json
+
+[Incubating] Problems report is available at: file:///tmp/proj/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 22s
+7 actionable tasks: 7 executed
+
+===== DIAGNOSTICO =====
+--- Archivos que recibio GitHub ---
+./README.md
+./build.gradle
+./gradle.properties
+./settings.gradle
+./src/main/java/com/morphzuka/Gestures.java
+./src/main/java/com/morphzuka/GunItem.java
+./src/main/java/com/morphzuka/HitboxOverride.java
+./src/main/java/com/morphzuka/HitboxRegistry.java
+./src/main/java/com/morphzuka/MorphZuka.java
+./src/main/java/com/morphzuka/MorphZukaClient.java
+./src/main/java/com/morphzuka/MorpherGun.java
+./src/main/java/com/morphzuka/MzServerConfig.java
+./src/main/java/com/morphzuka/Role.java
+./src/main/java/com/morphzuka/compat/SvcPlugin.java
+./src/main/java/com/morphzuka/mixin/CameraMixin.java
+./src/main/java/com/morphzuka/mixin/LivingEntityRendererMixin.java
+./src/main/java/com/morphzuka/mixin/PlayerDimensionsMixin.java
+./src/main/java/com/morphzuka/mixin/PlayerEntityRendererMixin.java
+./src/main/java/com/morphzuka/model/AnimConfig.java
+./src/main/java/com/morphzuka/model/AnimIO.java
+./src/main/java/com/morphzuka/model/AnimStates.java
+./src/main/java/com/morphzuka/model/BBModel.java
+./src/main/java/com/morphzuka/model/CubeXform.java
+./src/main/java/com/morphzuka/model/ModelBounds.java
+./src/main/java/com/morphzuka/model/ModelImporter.java
+./src/main/java/com/morphzuka/model/ModelLoader.java
+./src/main/java/com/morphzuka/model/ModelManager.java
+./src/main/java/com/morphzuka/model/VanillaPlayer.java
+./src/main/java/com/morphzuka/net/ClientNet.java
+./src/main/java/com/morphzuka/net/Payloads.java
+./src/main/java/com/morphzuka/net/ServerNet.java
+./src/main/java/com/morphzuka/render/BBRenderer.java
+./src/main/java/com/morphzuka/render/CubeSwarm.java
+./src/main/java/com/morphzuka/render/Form.java
+./src/main/java/com/morphzuka/render/Forms.java
+./src/main/java/com/morphzuka/render/MorphManager.java
+./src/main/java/com/morphzuka/render/Physics.java
+./src/main/java/com/morphzuka/render/PreviewSim.java
+./src/main/java/com/morphzuka/render/Surface.java
+./src/main/java/com/morphzuka/render/TexPixels.java
+./src/main/java/com/morphzuka/render/Transition.java
+./src/main/java/com/morphzuka/screen/AnimConfigScreen.java
+./src/main/java/com/morphzuka/screen/EditorScreen.java
+./src/main/java/com/morphzuka/screen/ModelScreen.java
+./src/main/java/com/morphzuka/screen/RadialScreen.java
+./src/main/java/com/morphzuka/screen/SliderScreen.java
+./src/main/java/com/morphzuka/ui/Background.java
+./src/main/java/com/morphzuka/ui/Gfx.java
+./src/main/java/com/morphzuka/ui/Theme.java
+./src/main/java/com/morphzuka/ui/VideoDecoder.java
+./src/main/java/com/morphzuka/ui/VideoLoader.java
+./src/main/java/com/morphzuka/voice/VoiceState.java
+./src/main/resources/assets/minecraft/models/item/carrot_on_a_stick.json
+./src/main/resources/assets/morphzuka/lang/en_us.json
+./src/main/resources/assets/morphzuka/lang/es_es.json
+./src/main/resources/assets/morphzuka/models/item/morpher_item/morphergun.json
+./src/main/resources/assets/morphzuka/textures/item/morpher_gun.png
+./src/main/resources/fabric.mod.json
+./src/main/resources/morphzuka.mixins.json
+--- build.gradle ---
+plugins {
+    id 'fabric-loom' version '1.9-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base { archivesName = project.archives_base_name }
+
+def withVoice = project.withVoice.toBoolean()
+def withVideo = project.withVideo.toBoolean()
+
+repositories {
+    mavenCentral()
+    maven { name = 'MaxHenkel'; url = 'https://maven.maxhenkel.de/repository/public' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Simple Voice Chat (API de plugins): solo para compilar; el mod real es opcional en runtime
+    if (withVoice) modCompileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+
+    // JCodec (mp4/H.264 en Java puro) para fondos de video; va empaquetado dentro del jar
+    if (withVideo) {
+        implementation "org.jcodec:jcodec:${project.jcodec_version}"
+        implementation "org.jcodec:jcodec-javase:${project.jcodec_version}"
+        include "org.jcodec:jcodec:${project.jcodec_version}"
+        include "org.jcodec:jcodec-javase:${project.jcodec_version}"
+    }
+}
+
+sourceSets.main.java {
+    if (!withVoice) exclude 'com/morphzuka/compat/**'
+    if (!withVideo) exclude 'com/morphzuka/ui/VideoDecoder.java'
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") { expand "version": project.version }
+}
+
+tasks.withType(JavaCompile).configureEach { it.options.release = 21; it.options.encoding = 'UTF-8' }
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+--- Version de Gradle ---
+Gradle 8.12.1
+--- Recursos procesados ---
+build/resources/main/assets/minecraft/models/item/carrot_on_a_stick.json
+build/resources/main/assets/morphzuka/lang/en_us.json
+build/resources/main/assets/morphzuka/lang/es_es.json
+build/resources/main/assets/morphzuka/models/item/morpher_item/morphergun.json
+build/resources/main/assets/morphzuka/textures/item/morpher_gun.png
+build/resources/main/fabric.mod.json
+build/resources/main/morphzuka.mixins.json
+--- .jar generados ---
+## /tmp/proj/build/devlibs/morphzuka-2.5.0-dev.jar
+Archive:  /tmp/proj/build/devlibs/morphzuka-2.5.0-dev.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2026-11-27 21:05   META-INF/
+       25  2026-11-27 21:05   META-INF/MANIFEST.MF
+        0  2026-11-27 21:05   com/
+        0  2026-11-27 21:05   com/morphzuka/
+     3010  2026-11-27 21:05   com/morphzuka/MzServerConfig.class
+    11304  2026-11-27 21:05   com/morphzuka/MorphZuka.class
+        0  2026-11-27 21:05   com/morphzuka/net/
+     7640  2026-11-27 21:05   com/morphzuka/net/ClientNet.class
+     4055  2026-11-27 21:05   com/morphzuka/net/Payloads$HitboxPayload.class
+    12723  2026-11-27 21:05   com/morphzuka/net/ServerNet.class
+     4988  2026-11-27 21:05   com/morphzuka/net/Payloads$CubeFxPayload.class
+     4391  2026-11-27 21:05   com/morphzuka/net/Payloads$HitboxSyncPayload.class
+      823  2026-11-27 21:05   com/morphzuka/net/Payloads.class
+     4640  2026-11-27 21:05   com/morphzuka/net/Payloads$MorphPayload.class
+     2742  2026-11-27 21:05   com/morphzuka/Role.class
+        0  2026-11-27 21:05   com/morphzuka/render/
+    16436  2026-11-27 21:05   com/morphzuka/render/CubeSwarm.class
+     1271  2026-11-27 21:05   com/morphzuka/render/Form$Type.class
+      753  2026-11-27 21:05   com/morphzuka/render/CubeSwarm$Cube.class
+     1269  2026-11-27 21:05   com/morphzuka/render/BBRenderer$1.class
+     1014  2026-11-27 21:05   com/morphzuka/render/BBRenderer$Track.class
+      867  2026-11-27 21:05   com/morphzuka/render/MorphManager$State.class
+    36940  2026-11-27 21:05   com/morphzuka/render/BBRenderer.class
+      502  2026-11-27 21:05   com/morphzuka/render/Forms$Entry.class
+     1617  2026-11-27 21:05   com/morphzuka/render/BBRenderer$Ctx.class
+     1290  2026-11-27 21:05   com/morphzuka/render/MorphManager$Kind.class
+    15495  2026-11-27 21:05   com/morphzuka/render/Surface.class
+## /tmp/proj/build/devlibs/morphzuka-2.5.0-sources.jar
+Archive:  /tmp/proj/build/devlibs/morphzuka-2.5.0-sources.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2026-11-27 21:05   META-INF/
+       25  2026-11-27 21:05   META-INF/MANIFEST.MF
+        0  2026-11-27 21:04   assets/
+        0  2026-11-27 21:04   assets/minecraft/
+        0  2026-11-27 21:04   assets/minecraft/models/
+        0  2026-11-27 21:04   assets/minecraft/models/item/
+      234  2026-11-27 21:04   assets/minecraft/models/item/carrot_on_a_stick.json
+        0  2026-11-27 21:04   assets/morphzuka/
+        0  2026-11-27 21:04   assets/morphzuka/models/
+        0  2026-11-27 21:04   assets/morphzuka/models/item/
+        0  2026-11-27 21:04   assets/morphzuka/models/item/morpher_item/
+      946  2026-11-27 21:04   assets/morphzuka/models/item/morpher_item/morphergun.json
+        0  2026-11-27 21:04   assets/morphzuka/textures/
+        0  2026-11-27 21:04   assets/morphzuka/textures/item/
+      244  2026-11-27 21:04   assets/morphzuka/textures/item/morpher_gun.png
+        0  2026-11-27 21:04   assets/morphzuka/lang/
+      231  2026-11-27 21:04   assets/morphzuka/lang/en_us.json
+      243  2026-11-27 21:04   assets/morphzuka/lang/es_es.json
+      459  2026-11-27 21:04   fabric.mod.json
+      283  2026-11-27 21:04   morphzuka.mixins.json
+        0  2026-11-27 21:04   com/
+        0  2026-11-27 21:04   com/morphzuka/
+    19648  2026-11-27 21:04   com/morphzuka/MorphZukaClient.java
+        0  2026-11-27 21:04   com/morphzuka/net/
+     7588  2026-11-27 21:04   com/morphzuka/net/ServerNet.java
+     4003  2026-11-27 21:04   com/morphzuka/net/Payloads.java
+     3915  2026-11-27 21:04   com/morphzuka/net/ClientNet.java
+## /tmp/proj/build/libs/morphzuka-2.5.0-sources.jar
+Archive:  /tmp/proj/build/libs/morphzuka-2.5.0-sources.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      377  2026-11-27 21:05   META-INF/MANIFEST.MF
+        0  2026-11-27 21:05   com/
+        0  2026-11-27 21:05   com/morphzuka/
+    19568  2026-11-27 21:05   com/morphzuka/MorphZukaClient.java
+        0  2026-11-27 21:05   com/morphzuka/net/
+     7493  2026-11-27 21:05   com/morphzuka/net/ServerNet.java
+     4117  2026-11-27 21:05   com/morphzuka/net/Payloads.java
+     3858  2026-11-27 21:05   com/morphzuka/net/ClientNet.java
+     3229  2026-11-27 21:05   com/morphzuka/HitboxOverride.java
+        0  2026-11-27 21:05   com/morphzuka/render/
+     3061  2026-11-27 21:05   com/morphzuka/render/TexPixels.java
+     1220  2026-11-27 21:05   com/morphzuka/render/PreviewSim.java
+    13026  2026-11-27 21:05   com/morphzuka/render/Surface.java
+    16609  2026-11-27 21:05   com/morphzuka/render/MorphManager.java
+    34312  2026-11-27 21:05   com/morphzuka/render/BBRenderer.java
+     2710  2026-11-27 21:05   com/morphzuka/render/Forms.java
+     4327  2026-11-27 21:05   com/morphzuka/render/Transition.java
+     4681  2026-11-27 21:05   com/morphzuka/render/Form.java
+    15651  2026-11-27 21:05   com/morphzuka/render/CubeSwarm.java
+     7001  2026-11-27 21:05   com/morphzuka/render/Physics.java
+        0  2026-11-27 21:05   com/morphzuka/model/
+     5182  2026-11-27 21:05   com/morphzuka/model/ModelImporter.java
+     6589  2026-11-27 21:05   com/morphzuka/model/AnimStates.java
+     4996  2026-11-27 21:05   com/morphzuka/model/ModelBounds.java
+    21251  2026-11-27 21:05   com/morphzuka/model/ModelLoader.java
+     2497  2026-11-27 21:05   com/morphzuka/model/CubeXform.java
+     1836  2026-11-27 21:05   com/morphzuka/model/VanillaPlayer.java
+## /tmp/proj/build/libs/morphzuka-2.5.0.jar
+Archive:  /tmp/proj/build/libs/morphzuka-2.5.0.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      414  1980-01-01 00:00   META-INF/MANIFEST.MF
+        0  1980-01-01 00:00   META-INF/
+        0  1980-01-01 00:00   META-INF/jars/
+  2084640  1980-01-01 00:00   META-INF/jars/jcodec-0.2.5.jar
+    14421  1980-01-01 00:00   META-INF/jars/jcodec-javase-0.2.5.jar
+        0  1980-01-01 00:00   assets/
+        0  1980-01-01 00:00   assets/minecraft/
+        0  1980-01-01 00:00   assets/minecraft/models/
+        0  1980-01-01 00:00   assets/minecraft/models/item/
+      234  1980-01-01 00:00   assets/minecraft/models/item/carrot_on_a_stick.json
+        0  1980-01-01 00:00   assets/morphzuka/
+        0  1980-01-01 00:00   assets/morphzuka/lang/
+      231  1980-01-01 00:00   assets/morphzuka/lang/en_us.json
+      243  1980-01-01 00:00   assets/morphzuka/lang/es_es.json
+        0  1980-01-01 00:00   assets/morphzuka/models/
+        0  1980-01-01 00:00   assets/morphzuka/models/item/
+        0  1980-01-01 00:00   assets/morphzuka/models/item/morpher_item/
+      946  1980-01-01 00:00   assets/morphzuka/models/item/morpher_item/morphergun.json
+        0  1980-01-01 00:00   assets/morphzuka/textures/
+        0  1980-01-01 00:00   assets/morphzuka/textures/item/
+      244  1980-01-01 00:00   assets/morphzuka/textures/item/morpher_gun.png
+        0  1980-01-01 00:00   com/
+        0  1980-01-01 00:00   com/morphzuka/
+     2718  1980-01-01 00:00   com/morphzuka/Gestures.class
+     1648  1980-01-01 00:00   com/morphzuka/GunItem.class
+     3561  1980-01-01 00:00   com/morphzuka/HitboxOverride.class
+     2200  1980-01-01 00:00   com/morphzuka/HitboxRegistry.class
+## /tmp/proj/build/processIncludeJars/jcodec-0.2.5.jar
+Archive:  /tmp/proj/build/processIncludeJars/jcodec-0.2.5.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2019-06-15 22:26   META-INF/
+      288  2019-06-15 22:26   META-INF/MANIFEST.MF
+        0  2019-06-15 22:25   net/
+        0  2019-06-15 22:25   net/sourceforge/
+        0  2019-06-15 22:25   net/sourceforge/jaad/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/error/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/filterbank/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/gain/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/huffman/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/ps/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/sbr/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/syntax/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/tools/
+        0  2019-06-15 22:25   net/sourceforge/jaad/aac/transport/
+        0  2019-06-15 22:25   org/
+        0  2019-06-15 22:25   org/jcodec/
+        0  2019-06-15 22:25   org/jcodec/algo/
+        0  2019-06-15 22:25   org/jcodec/api/
+        0  2019-06-15 22:25   org/jcodec/api/specific/
+        0  2019-06-15 22:25   org/jcodec/api/transcode/
+        0  2019-06-15 22:25   org/jcodec/api/transcode/filters/
+        0  2019-06-15 22:25   org/jcodec/audio/
+        0  2019-06-15 22:25   org/jcodec/codecs/
+        0  2019-06-15 22:25   org/jcodec/codecs/aac/
+        0  2019-06-15 22:25   org/jcodec/codecs/aac/blocks/
+        0  2019-06-15 22:25   org/jcodec/codecs/common/
+## /tmp/proj/build/processIncludeJars/jcodec-javase-0.2.5.jar
+Archive:  /tmp/proj/build/processIncludeJars/jcodec-javase-0.2.5.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2019-06-15 22:31   META-INF/
+      130  2019-06-15 22:31   META-INF/MANIFEST.MF
+        0  2019-06-15 22:31   org/
+        0  2019-06-15 22:31   org/jcodec/
+        0  2019-06-15 22:31   org/jcodec/api/
+        0  2019-06-15 22:31   org/jcodec/api/awt/
+        0  2019-06-15 22:31   org/jcodec/api/transcode/
+        0  2019-06-15 22:31   org/jcodec/api/transcode/filter/
+        0  2019-06-15 22:31   org/jcodec/codecs/
+        0  2019-06-15 22:31   org/jcodec/codecs/pngawt/
+        0  2019-06-15 22:31   org/jcodec/common/
+        0  2019-06-15 22:31   org/jcodec/scale/
+     4392  2019-06-15 22:31   org/jcodec/api/awt/AWTFrameGrab.class
+     2144  2019-06-15 22:31   org/jcodec/api/awt/AWTSequenceEncoder.class
+     2852  2019-06-15 22:31   org/jcodec/api/awt/SequenceMuxer.class
+     1869  2019-06-15 22:31   org/jcodec/api/transcode/filter/AWTFilter.class
+     1714  2019-06-15 22:31   org/jcodec/codecs/pngawt/PNGDecoder.class
+     2796  2019-06-15 22:31   org/jcodec/codecs/pngawt/PNGEncoder.class
+      648  2019-06-15 22:31   org/jcodec/common/SoundUtil.class
+     5917  2019-06-15 22:31   org/jcodec/scale/AWTUtil.class
+        0  2019-06-15 22:31   META-INF/maven/
+        0  2019-06-15 22:31   META-INF/maven/org.jcodec/
+        0  2019-06-15 22:31   META-INF/maven/org.jcodec/jcodec-javase/
+     3381  2019-06-15 22:31   META-INF/maven/org.jcodec/jcodec-javase/pom.xml
+      108  2019-06-15 22:31   META-INF/maven/org.jcodec/jcodec-javase/pom.properties
+      162  1980-01-01 00:00   fabric.mod.json
+---------                     -------
+===== FIN DIAGNOSTICO =====
