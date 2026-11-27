@@ -109,6 +109,17 @@
     <!-- ───────── Columna izquierda: configuración y archivos ───────── -->
     <div class="space-y-6">
 
+      <section class="panel" aria-labelledby="h-proj">
+        <h2 id="h-proj">Proyecto completo (.zip)</h2>
+        <label class="drop" id="dropProj">
+          <input id="inProj" type="file" accept=".zip,application/zip" class="sr-only">
+          <span><strong>Arrastra el .zip de tu mod</strong> y la página detecta todo sola</span>
+          <span class="text-xs">Sirve un proyecto de Gradle completo o solo la carpeta con tu código. Las secciones de abajo son para subir las piezas por separado.</span>
+        </label>
+        <p id="noteProj" class="note" aria-live="polite"></p>
+        <div id="projInfo" class="mt-1 hidden rounded-lg border border-accent/30 p-4 text-sm" aria-live="polite"></div>
+      </section>
+
       <section class="panel" aria-labelledby="h-mod">
         <h2 id="h-mod">Datos del mod</h2>
         <div class="grid gap-4 sm:grid-cols-2">
@@ -358,7 +369,7 @@ const h = (tag, props = {}, ...kids) => {
   return el;
 };
 
-const state = { java: [], res: [], zips: [], libs: [], jobId: null, es: null, busy: false };
+const state = { java: [], res: [], zips: [], libs: [], pres: [], project: null, jobId: null, es: null, busy: false };
 const FORM_IDS = ['mod_id', 'mod_name', 'version', 'minecraft_version', 'fabric_loader_version', 'fabric_api_version',
   'mappings', 'yarn_mappings', 'loom_version', 'java_version', 'gradle_version', 'gh_repo', 'entry_main', 'entry_client', 'lib_mode'];
 
@@ -516,7 +527,7 @@ function wireDrop(zoneId, inputId, onFiles) {
 const rmBtn = (fn, label) => h('button', { type: 'button', class: 'rm x', 'aria-label': label, onclick: fn, text: '✕' });
 
 // ───────── Java ─────────
-wireDrop('dropJava', 'inJava', async (items) => {
+async function addJava(items) {
   const javas = items.filter((i) => i.file.name.endsWith('.java'));
   const skipped = items.length - javas.length;
   for (const { file, rel } of javas) {
@@ -538,7 +549,8 @@ wireDrop('dropJava', 'inJava', async (items) => {
   saveForm();
   $('noteJava').textContent = skipped ? `Se ignoraron ${skipped} archivo(s) que no son .java.` : '';
   renderJava();
-});
+}
+wireDrop('dropJava', 'inJava', addJava);
 
 function renderJava() {
   $('javaList').replaceChildren(...state.java.map((it) => h('li', { class: 'row' },
@@ -633,6 +645,143 @@ function renderLibs() {
     h('span', { class: 'p text-xs text-mute', text: fmtSize(l.file.size) }),
     rmBtn(() => { state.libs = state.libs.filter((x) => x !== l); renderLibs(); }, 'Quitar ' + l.file.name))));
 }
+
+// ───────── Proyecto completo (.zip) ─────────
+const SKIP_DIRS = /(^|\/)(build|\.gradle|\.git|\.idea|\.vscode|\.github|run|out|node_modules|__MACOSX)\//;
+const SKIP_FILES = /(^|\/)(gradlew|gradlew\.bat|\.DS_Store|Thumbs\.db)$|(^|\/)gradle\/wrapper\//;
+
+function propsOf(t) {
+  const o = {};
+  for (const l of t.split(/\r?\n/)) {
+    const m = l.match(/^\s*([\w.-]+)\s*=\s*(.*?)\s*$/);
+    if (m) o[m[1]] = m[2];
+  }
+  return o;
+}
+function findRoot(names) {
+  const depth = (p) => p.split('/').length;
+  const pick = (re) => names.filter((n) => re.test(n)).sort((a, b) => depth(a) - depth(b))[0];
+  let hit = pick(/(^|\/)(build|settings)\.gradle(\.kts)?$/);
+  if (hit) return { root: hit.replace(/[^/]*$/, ''), gradle: true };
+  hit = pick(/(^|\/)src\/(main|client)\/(java|resources)\//);
+  if (hit) {
+    const m = /(^|\/)(src\/(?:main|client)\/)/.exec(hit);
+    return { root: hit.slice(0, m.index + m[1].length), gradle: false };
+  }
+  hit = pick(/(^|\/)fabric\.mod\.json$/);
+  if (hit) return { root: hit.replace(/[^/]*$/, ''), gradle: false };
+  return { root: '', gradle: false };
+}
+
+function showProj(lines) {
+  const box = $('projInfo');
+  box.replaceChildren(
+    h('p', { class: 'font-medium text-accent', text: lines[0] }),
+    ...lines.slice(1).map((t) => h('p', { class: 'mt-1 text-mute', text: t })),
+    h('button', { type: 'button', class: 'btn btn-ghost mt-3', text: 'Quitar proyecto', onclick: () => clearProject() })
+  );
+  box.classList.remove('hidden');
+}
+function clearProject() {
+  state.project = null; state.pres = []; state.java = []; state.libs = []; state.res = []; state.zips = [];
+  $('projInfo').classList.add('hidden');
+  $('noteProj').textContent = '';
+  $('modJson').value = '';
+  checkJson();
+  renderJava(); renderRes(); renderLibs();
+}
+
+async function loadProjectZip(file) {
+  const note = $('noteProj');
+  note.textContent = 'Leyendo el .zip…';
+  let zip;
+  try { zip = await JSZip.loadAsync(file); }
+  catch { note.textContent = 'No se pudo leer el .zip. ¿Está dañado?'; return; }
+
+  const all = Object.values(zip.files).filter((e) => !e.dir && !SKIP_DIRS.test(e.name) && !SKIP_FILES.test(e.name));
+  if (!all.length) { note.textContent = 'El .zip no contiene archivos útiles.'; return; }
+  const { root, gradle } = findRoot(all.map((e) => e.name));
+  const inRoot = all.filter((e) => e.name.startsWith(root)).map((e) => ({ e, rel: e.name.slice(root.length) }));
+  const txt = async (rel) => { const f = zip.file(root + rel); return f ? f.async('string') : null; };
+
+  clearProject();
+  const props = propsOf((await txt('gradle.properties')) || '');
+  const set = (id, v) => { if (v != null && String(v).trim() !== '') $(id).value = String(v).trim(); };
+
+  // fabric.mod.json (prioridad baja) y después gradle.properties (prioridad alta)
+  const mj = inRoot.find((x) => /(^|\/)fabric\.mod\.json$/.test(x.rel));
+  let json = null;
+  if (mj) { try { json = JSON.parse(await mj.e.async('string')); } catch {} }
+  if (json) {
+    set('mod_id', json.id);
+    set('mod_name', json.name);
+    if (json.version && !/\$\{/.test(String(json.version))) set('version', json.version);
+    const ep = (k) => { const a = json.entrypoints && json.entrypoints[k] && json.entrypoints[k][0]; return typeof a === 'string' ? a : a && a.value; };
+    set('entry_main', ep('main'));
+    set('entry_client', ep('client'));
+    const mc = String((json.depends && json.depends.minecraft) || '').match(/\d+\.\d+(\.\d+)?/);
+    if (mc) set('minecraft_version', mc[0]);
+    const ld = String((json.depends && json.depends.fabricloader) || '').match(/\d+\.\d+\.\d+/);
+    if (ld) set('fabric_loader_version', ld[0]);
+  }
+  set('minecraft_version', props.minecraft_version);
+  set('fabric_loader_version', props.loader_version);
+  set('fabric_api_version', props.fabric_version);
+  set('version', props.mod_version);
+  set('loom_version', props.loom_version);
+  if (!(json && json.id) && /^[a-z][a-z0-9_-]{1,63}$/.test(props.archives_base_name || '')) set('mod_id', props.archives_base_name);
+  if (props.yarn_mappings) { $('mappings').value = 'yarn'; set('yarn_mappings', props.yarn_mappings); }
+
+  if (gradle) {
+    // Proyecto de Gradle completo: se compila con sus propios archivos de build.
+    const bg = (await txt('build.gradle')) || (await txt('build.gradle.kts')) || '';
+    if (/officialMojangMappings/.test(bg)) $('mappings').value = 'mojang';
+    const gv = ((await txt('gradle/wrapper/gradle-wrapper.properties')) || '').match(/gradle-(\d+(?:\.\d+){1,2})-/);
+    const jm = bg.match(/JavaVersion\.VERSION_(\d+)/) || bg.match(/release\s*=\s*(\d+)/) || bg.match(/JavaLanguageVersion\.of\((\d+)\)/);
+    const files = await Promise.all(inRoot.map(async ({ e, rel }) => ({ path: rel, blob: await e.async('blob') })));
+    state.project = { files, gradle: gv ? gv[1] : null, java: jm && +jm[1] >= 8 ? +jm[1] : null, name: file.name };
+    syncYarn(); saveForm();
+    const nJava = inRoot.filter((x) => /\.java$/.test(x.rel)).length;
+    showProj([
+      `Proyecto de Gradle detectado en ${file.name}`,
+      `${files.length} archivos (${nJava} .java). Minecraft ${$('minecraft_version').value}, Gradle ${state.project.gradle || 'por defecto'}, Java ${state.project.java || 'según Minecraft'}.`,
+      'Se compilará con los archivos de build del propio proyecto, así que las secciones de abajo se ignoran.'
+    ]);
+    note.textContent = '';
+    return;
+  }
+
+  // Solo código: se ubica cada pieza y se genera el build de Gradle.
+  const javaItems = [];
+  let nRes = 0;
+  for (const { e, rel } of inRoot) {
+    const base = rel.split('/').pop();
+    if (/\.java$/.test(base)) {
+      if (!/(^|\/)src\/test\//.test(rel)) javaItems.push({ file: new File([await e.async('blob')], base), rel });
+    } else if (/(^|\/)fabric\.mod\.json$/.test(rel)) {
+      $('modJson').value = await e.async('string');
+    } else if (/^libs\/[^/]+\.jar$/i.test(rel)) {
+      state.libs.push({ file: new File([await e.async('blob')], base) });
+    } else {
+      const m = rel.match(/^src\/(?:main|client)\/resources\/(.+)$/) || rel.match(/^((?:assets|data)\/.+)$/) || (/\.mixins\.json$/.test(rel) ? [0, base] : null);
+      if (m) { state.pres.push({ path: m[1], blob: await e.async('blob') }); nRes++; }
+    }
+  }
+  if (!javaItems.length) { note.textContent = 'No encontré archivos .java dentro del .zip.'; return; }
+  await addJava(javaItems);
+  checkJson(); renderLibs(); syncYarn(); saveForm();
+  showProj([
+    `Código detectado en ${file.name}`,
+    `${javaItems.length} archivos .java, ${nRes} recursos, ${state.libs.length} librerías${$('modJson').value.trim() ? ', fabric.mod.json encontrado' : ', sin fabric.mod.json (se autogenerará)'}.`,
+    'Revisa los datos del mod abajo: si el .zip no traía versiones, tendrás que completarlas.'
+  ]);
+  note.textContent = '';
+}
+wireDrop('dropProj', 'inProj', (items) => {
+  const z = items.find((i) => /\.zip$/i.test(i.file.name));
+  if (!z) { $('noteProj').textContent = 'Arrastra un archivo .zip.'; return; }
+  loadProjectZip(z.file);
+});
 
 // ───────── Consola ─────────
 const con = $('console');
@@ -875,10 +1024,10 @@ async function compile() {
   if (state.busy) return;
   const fm = $('formMsg');
   fm.className = 'mt-3 min-h-[1.25rem] text-sm text-bad';
-  const err = validate();
+  const err = state.project ? '' : validate();
   if (err) { fm.textContent = err; return; }
   fm.textContent = '';
-  if (!$('modJson').value.trim()) autogen();
+  if (!state.project && !$('modJson').value.trim()) autogen();
   let repo;
   try { repo = ghCfg().repo; } catch (e) { fm.textContent = e.message; return; }
 
@@ -895,7 +1044,7 @@ async function compile() {
   try {
     const val = (k) => $(k).value.trim();
     const mc = val('minecraft_version');
-    const jv = parseInt(val('java_version'), 10) || javaFor(mc);
+    let jv = parseInt(val('java_version'), 10) || javaFor(mc);
     const c = {
       modId: val('mod_id'), version: val('version'), minecraft: mc, loader: val('fabric_loader_version'), api: val('fabric_api_version'),
       mappings: val('mappings'), yarn: val('yarn_mappings'), loom: val('loom_version') || '1.9-SNAPSHOT', libMode: val('lib_mode')
@@ -903,20 +1052,28 @@ async function compile() {
 
     addLine('Empaquetando el proyecto…', 'info');
     const zip = new JSZip();
-    const libNames = [];
-    for (const l of state.libs) {
-      let n = l.file.name.replace(/[^A-Za-z0-9._-]/g, '_');
-      while (libNames.includes(n)) n = '_' + n;
-      libNames.push(n);
-      zip.file('libs/' + n, l.file);
+    let gradleVer = val('gradle_version') || '8.12.1';
+    if (state.project) {
+      for (const f of state.project.files) zip.file(f.path, f.blob);
+      jv = state.project.java || jv;
+      gradleVer = state.project.gradle || gradleVer;
+    } else {
+      const libNames = [];
+      for (const l of state.libs) {
+        let n = l.file.name.replace(/[^A-Za-z0-9._-]/g, '_');
+        while (libNames.includes(n)) n = '_' + n;
+        libNames.push(n);
+        zip.file('libs/' + n, l.file);
+      }
+      zip.file('build.gradle', renderBuildGradle(c, libNames, jv));
+      zip.file('gradle.properties', renderProps(c));
+      zip.file('settings.gradle', SETTINGS);
+      for (const j of state.java) zip.file('src/main/java/' + cleanRel(joinPath(j.dir, j.file.name)), j.file);
+      for (const r of state.res) zip.file('src/main/resources/' + cleanRel(r.path), r.file);
+      for (const z of state.zips) zip.file('resource-zips/' + z.file.name.replace(/[^A-Za-z0-9._-]/g, '_'), z.file);
+      zip.file('src/main/resources/fabric.mod.json', $('modJson').value.split('${version}').join(c.version));
+      for (const r of state.pres) zip.file('src/main/resources/' + cleanRel(r.path), r.blob);
     }
-    zip.file('build.gradle', renderBuildGradle(c, libNames, jv));
-    zip.file('gradle.properties', renderProps(c));
-    zip.file('settings.gradle', SETTINGS);
-    for (const j of state.java) zip.file('src/main/java/' + cleanRel(joinPath(j.dir, j.file.name)), j.file);
-    for (const r of state.res) zip.file('src/main/resources/' + cleanRel(r.path), r.file);
-    for (const z of state.zips) zip.file('resource-zips/' + z.file.name.replace(/[^A-Za-z0-9._-]/g, '_'), z.file);
-    zip.file('src/main/resources/fabric.mod.json', $('modJson').value.split('${version}').join(c.version));
 
     const b64 = await zip.generateAsync({ type: 'base64', compression: 'DEFLATE' });
     const bytes = b64.length * 0.75;
@@ -930,7 +1087,7 @@ async function compile() {
     try {
       await gh(`/repos/${repo}/actions/workflows/build.yml/dispatches`, {
         method: 'POST',
-        body: { ref: branch, inputs: { job_id: id, java: String(jv), gradle: val('gradle_version') || '8.12.1' } }
+        body: { ref: branch, inputs: { job_id: id, java: String(jv), gradle: gradleVer } }
       });
     } catch (e) {
       if (e.status === 404) throw new Error('No se encontró el workflow en el repositorio. Pulsa «Instalar el workflow en el repositorio».');
