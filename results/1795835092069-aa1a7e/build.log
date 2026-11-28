@@ -3,52 +3,32 @@ Daemon will be stopped at the end of the build
 
 > Configure project :
 Fabric Loom: 1.9.2
-:remapping 50 mods from modImplementation (java-api)
-
-> Task :compileJava
-/tmp/proj/src/main/java/com/morphzuka/render/Surface.java:142: error: Capture is not abstract and does not override abstract method vertex(float,float,float) in VertexConsumer
-    private static final class Capture implements VertexConsumer {
-                         ^
-/tmp/proj/src/main/java/com/morphzuka/render/Surface.java:145: error: method does not override or implement a method from a supertype
-        @Override public VertexConsumer vertex(double x, double y, double z) { cur = new float[]{(float) x, (float) y, (float) z, 0f, 0f}; v.add(cur); return this; }
-        ^
-Note: /tmp/proj/src/main/java/com/morphzuka/render/Surface.java uses or overrides a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-2 errors
-
-> Task :compileJava FAILED
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1795816328584.json
-
-[Incubating] Problems report is available at: file:///tmp/proj/build/reports/problems/problems-report.html
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1795835125562.json
 
 FAILURE: Build failed with an exception.
 
+* Where:
+Build file '/tmp/proj/build.gradle' line: 6
+
 * What went wrong:
-Execution failed for task ':compileJava'.
-> Compilation failed; see the compiler output below.
-  /tmp/proj/src/main/java/com/morphzuka/render/Surface.java:142: error: Capture is not abstract and does not override abstract method vertex(float,float,float) in VertexConsumer
-      private static final class Capture implements VertexConsumer {
-                           ^
-  /tmp/proj/src/main/java/com/morphzuka/render/Surface.java:145: error: method does not override or implement a method from a supertype
-          @Override public VertexConsumer vertex(double x, double y, double z) { cur = new float[]{(float) x, (float) y, (float) z, 0f, 0f}; v.add(cur); return this; }
-          ^
-  Note: /tmp/proj/src/main/java/com/morphzuka/render/Surface.java uses or overrides a deprecated API.
-  Note: Recompile with -Xlint:deprecation for details.
-  2 errors
+A problem occurred evaluating root project 'proj'.
+> Could not get unknown property 'mod_version' for root project 'proj' of type org.gradle.api.Project.
 
 * Try:
-> Check your code and dependencies to fix the compilation error(s)
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
 
-BUILD FAILED in 23s
-1 actionable task: 1 executed
+BUILD FAILED in 4s
 
 ===== DIAGNOSTICO =====
 --- Archivos que recibio GitHub ---
 ./README.md
 ./build.gradle
-./gradle.properties
 ./settings.gradle
+./src/main/java/com/morphzuka/BlockLock.java
+./src/main/java/com/morphzuka/BlockMorphRegistry.java
 ./src/main/java/com/morphzuka/Gestures.java
 ./src/main/java/com/morphzuka/GunItem.java
 ./src/main/java/com/morphzuka/HitboxOverride.java
@@ -59,12 +39,22 @@ BUILD FAILED in 23s
 ./src/main/java/com/morphzuka/MzServerConfig.java
 ./src/main/java/com/morphzuka/Role.java
 ./src/main/java/com/morphzuka/compat/SvcPlugin.java
+./src/main/java/com/morphzuka/mixin/ArmorFeatureRendererMixin.java
 ./src/main/java/com/morphzuka/mixin/CameraMixin.java
+./src/main/java/com/morphzuka/mixin/CapeFeatureRendererMixin.java
+./src/main/java/com/morphzuka/mixin/ElytraFeatureRendererMixin.java
+./src/main/java/com/morphzuka/mixin/EntityCollidableMixin.java
+./src/main/java/com/morphzuka/mixin/EntityShadowMixin.java
+./src/main/java/com/morphzuka/mixin/HeldItemFeatureRendererMixin.java
+./src/main/java/com/morphzuka/mixin/ItemRendererMixin.java
+./src/main/java/com/morphzuka/mixin/KeyboardInputMixin.java
 ./src/main/java/com/morphzuka/mixin/LivingEntityRendererMixin.java
+./src/main/java/com/morphzuka/mixin/LivingPushableMixin.java
 ./src/main/java/com/morphzuka/mixin/ModelPartAccessor.java
 ./src/main/java/com/morphzuka/mixin/ModelPartMixin.java
 ./src/main/java/com/morphzuka/mixin/PlayerDimensionsMixin.java
 ./src/main/java/com/morphzuka/mixin/PlayerEntityRendererMixin.java
+./src/main/java/com/morphzuka/mixin/ShoulderParrotFeatureRendererMixin.java
 ./src/main/java/com/morphzuka/model/AnimConfig.java
 ./src/main/java/com/morphzuka/model/AnimIO.java
 ./src/main/java/com/morphzuka/model/AnimScan.java
@@ -72,22 +62,32 @@ BUILD FAILED in 23s
 ./src/main/java/com/morphzuka/model/BBModel.java
 ./src/main/java/com/morphzuka/model/CubeXform.java
 ./src/main/java/com/morphzuka/model/ModelBounds.java
+./src/main/java/com/morphzuka/model/ModelBundle.java
 ./src/main/java/com/morphzuka/model/ModelImporter.java
 ./src/main/java/com/morphzuka/model/ModelLoader.java
 ./src/main/java/com/morphzuka/model/ModelManager.java
+./src/main/java/com/morphzuka/model/ModelShare.java
+./src/main/java/com/morphzuka/model/RemoteModels.java
 ./src/main/java/com/morphzuka/model/VanillaPlayer.java
 ./src/main/java/com/morphzuka/net/ClientNet.java
+./src/main/java/com/morphzuka/net/GestureSync.java
+./src/main/java/com/morphzuka/net/ModelSync.java
 ./src/main/java/com/morphzuka/net/Payloads.java
 ./src/main/java/com/morphzuka/net/ServerNet.java
+./src/main/java/com/morphzuka/render/Anchors.java
 ./src/main/java/com/morphzuka/render/BBRenderer.java
+./src/main/java/com/morphzuka/render/ClassAnimScan.java
 ./src/main/java/com/morphzuka/render/CubeSwarm.java
 ./src/main/java/com/morphzuka/render/EntityCfg.java
 ./src/main/java/com/morphzuka/render/Form.java
 ./src/main/java/com/morphzuka/render/Forms.java
+./src/main/java/com/morphzuka/render/MorphAnim.java
 ./src/main/java/com/morphzuka/render/MorphManager.java
+./src/main/java/com/morphzuka/render/PartTex.java
 ./src/main/java/com/morphzuka/render/PartTree.java
 ./src/main/java/com/morphzuka/render/Physics.java
 ./src/main/java/com/morphzuka/render/PreviewSim.java
+./src/main/java/com/morphzuka/render/PropRender.java
 ./src/main/java/com/morphzuka/render/Surface.java
 ./src/main/java/com/morphzuka/render/TexPixels.java
 ./src/main/java/com/morphzuka/render/Transition.java
@@ -107,8 +107,10 @@ BUILD FAILED in 23s
 ./src/main/resources/assets/minecraft/models/item/carrot_on_a_stick.json
 ./src/main/resources/assets/morphzuka/lang/en_us.json
 ./src/main/resources/assets/morphzuka/lang/es_es.json
-./src/main/resources/assets/morphzuka/models/item/morpher_item/morphergun.json
-./src/main/resources/assets/morphzuka/textures/item/morpher_gun.png
+./src/main/resources/assets/morphzuka/models/item/brochazuka.json
+./src/main/resources/assets/morphzuka/models/item/brochazuka_3d.json
+./src/main/resources/assets/morphzuka/textures/item/itemrodillo.png
+./src/main/resources/assets/morphzuka/textures/item/rodillozuka.png
 ./src/main/resources/fabric.mod.json
 ./src/main/resources/morphzuka.mixins.json
 --- build.gradle ---
