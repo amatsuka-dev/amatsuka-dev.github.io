@@ -24,7 +24,7 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :remapSourcesJar
 > Task :assemble
 > Task :build
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1795836228976.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1795838073683.json
 
 [Incubating] Problems report is available at: file:///tmp/proj/build/reports/problems/problems-report.html
 
@@ -34,7 +34,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 20s
+BUILD SUCCESSFUL in 22s
 7 actionable tasks: 7 executed
 
 ===== DIAGNOSTICO =====
@@ -49,6 +49,7 @@ BUILD SUCCESSFUL in 20s
 ./src/main/java/com/morphzuka/GunItem.java
 ./src/main/java/com/morphzuka/HitboxOverride.java
 ./src/main/java/com/morphzuka/HitboxRegistry.java
+./src/main/java/com/morphzuka/MenuLock.java
 ./src/main/java/com/morphzuka/MorphZuka.java
 ./src/main/java/com/morphzuka/MorphZukaClient.java
 ./src/main/java/com/morphzuka/MorpherGun.java
@@ -99,6 +100,7 @@ BUILD SUCCESSFUL in 20s
 ./src/main/java/com/morphzuka/render/Forms.java
 ./src/main/java/com/morphzuka/render/MorphAnim.java
 ./src/main/java/com/morphzuka/render/MorphManager.java
+./src/main/java/com/morphzuka/render/MorphTarget.java
 ./src/main/java/com/morphzuka/render/PartTex.java
 ./src/main/java/com/morphzuka/render/PartTree.java
 ./src/main/java/com/morphzuka/render/Physics.java
@@ -200,95 +202,95 @@ build/resources/main/morphzuka.mixins.json
 Archive:  /tmp/proj/build/devlibs/morphzuka-1.0.0-dev.jar
   Length      Date    Time    Name
 ---------  ---------- -----   ----
-        0  2026-11-28 03:24   META-INF/
-       25  2026-11-28 03:24   META-INF/MANIFEST.MF
-        0  2026-11-28 03:24   com/
-        0  2026-11-28 03:24   com/morphzuka/
-     3152  2026-11-28 03:24   com/morphzuka/MzServerConfig.class
-    12407  2026-11-28 03:24   com/morphzuka/MorphZuka.class
-        0  2026-11-28 03:24   com/morphzuka/net/
-     3968  2026-11-28 03:24   com/morphzuka/net/GestureSync.class
-      483  2026-11-28 03:24   com/morphzuka/net/ServerNet$Upload.class
-     4236  2026-11-28 03:24   com/morphzuka/net/Payloads$ModelUploadPayload.class
-      670  2026-11-28 03:24   com/morphzuka/net/ModelSync$Pending.class
-    10090  2026-11-28 03:24   com/morphzuka/net/ClientNet.class
-     4055  2026-11-28 03:24   com/morphzuka/net/Payloads$HitboxPayload.class
-     4226  2026-11-28 03:24   com/morphzuka/net/Payloads$ModelRequestPayload.class
-    24414  2026-11-28 03:24   com/morphzuka/net/ServerNet.class
-     4988  2026-11-28 03:24   com/morphzuka/net/Payloads$CubeFxPayload.class
-     4391  2026-11-28 03:24   com/morphzuka/net/Payloads$HitboxSyncPayload.class
-     4421  2026-11-28 03:24   com/morphzuka/net/Payloads$ModelInfoPayload.class
-      791  2026-11-28 03:24   com/morphzuka/net/ServerNet$Job.class
-     4831  2026-11-28 03:24   com/morphzuka/net/Payloads$ModelChunkPayload.class
-     1613  2026-11-28 03:24   com/morphzuka/net/Payloads.class
-     1619  2026-11-28 03:24   com/morphzuka/net/ServerNet$Stored.class
-    17077  2026-11-28 03:24   com/morphzuka/net/ModelSync.class
-     6253  2026-11-28 03:24   com/morphzuka/net/Payloads$GesturePayload.class
-     4640  2026-11-28 03:24   com/morphzuka/net/Payloads$MorphPayload.class
-     3591  2026-11-28 03:24   com/morphzuka/Role.class
-        0  2026-11-28 03:24   com/morphzuka/render/
+        0  2026-11-28 03:54   META-INF/
+       25  2026-11-28 03:54   META-INF/MANIFEST.MF
+        0  2026-11-28 03:54   com/
+        0  2026-11-28 03:54   com/morphzuka/
+     4388  2026-11-28 03:54   com/morphzuka/MzServerConfig.class
+    16829  2026-11-28 03:54   com/morphzuka/MorphZuka.class
+        0  2026-11-28 03:54   com/morphzuka/net/
+     3968  2026-11-28 03:54   com/morphzuka/net/GestureSync.class
+      483  2026-11-28 03:54   com/morphzuka/net/ServerNet$Upload.class
+     4236  2026-11-28 03:54   com/morphzuka/net/Payloads$ModelUploadPayload.class
+      670  2026-11-28 03:54   com/morphzuka/net/ModelSync$Pending.class
+    11690  2026-11-28 03:54   com/morphzuka/net/ClientNet.class
+     4055  2026-11-28 03:54   com/morphzuka/net/Payloads$HitboxPayload.class
+     3819  2026-11-28 03:54   com/morphzuka/net/Payloads$MenuLockPayload.class
+     4226  2026-11-28 03:54   com/morphzuka/net/Payloads$ModelRequestPayload.class
+    28610  2026-11-28 03:54   com/morphzuka/net/ServerNet.class
+     4988  2026-11-28 03:54   com/morphzuka/net/Payloads$CubeFxPayload.class
+     4391  2026-11-28 03:54   com/morphzuka/net/Payloads$HitboxSyncPayload.class
+     4421  2026-11-28 03:54   com/morphzuka/net/Payloads$ModelInfoPayload.class
+      791  2026-11-28 03:54   com/morphzuka/net/ServerNet$Job.class
+     4831  2026-11-28 03:54   com/morphzuka/net/Payloads$ModelChunkPayload.class
+     1689  2026-11-28 03:54   com/morphzuka/net/Payloads.class
+     1619  2026-11-28 03:54   com/morphzuka/net/ServerNet$Stored.class
+    17077  2026-11-28 03:54   com/morphzuka/net/ModelSync.class
+     6253  2026-11-28 03:54   com/morphzuka/net/Payloads$GesturePayload.class
+     4640  2026-11-28 03:54   com/morphzuka/net/Payloads$MorphPayload.class
+     3591  2026-11-28 03:54   com/morphzuka/Role.class
 ## /tmp/proj/build/devlibs/morphzuka-1.0.0-sources.jar
 Archive:  /tmp/proj/build/devlibs/morphzuka-1.0.0-sources.jar
   Length      Date    Time    Name
 ---------  ---------- -----   ----
-        0  2026-11-28 03:24   META-INF/
-       25  2026-11-28 03:24   META-INF/MANIFEST.MF
-        0  2026-11-28 03:23   assets/
-        0  2026-11-28 03:23   assets/minecraft/
-        0  2026-11-28 03:23   assets/minecraft/models/
-        0  2026-11-28 03:23   assets/minecraft/models/item/
-      256  2026-11-28 03:23   assets/minecraft/models/item/carrot_on_a_stick.json
-        0  2026-11-28 03:23   assets/morphzuka/
-        0  2026-11-28 03:23   assets/morphzuka/models/
-        0  2026-11-28 03:23   assets/morphzuka/models/item/
-      106  2026-11-28 03:23   assets/morphzuka/models/item/brochazuka.json
-    15090  2026-11-28 03:23   assets/morphzuka/models/item/brochazuka_3d.json
-        0  2026-11-28 03:23   assets/morphzuka/textures/
-        0  2026-11-28 03:23   assets/morphzuka/textures/item/
-      456  2026-11-28 03:23   assets/morphzuka/textures/item/itemrodillo.png
-      789  2026-11-28 03:23   assets/morphzuka/textures/item/rodillozuka.png
-        0  2026-11-28 03:23   assets/morphzuka/lang/
-      231  2026-11-28 03:23   assets/morphzuka/lang/en_us.json
-      243  2026-11-28 03:23   assets/morphzuka/lang/es_es.json
-      460  2026-11-28 03:23   fabric.mod.json
-      591  2026-11-28 03:23   morphzuka.mixins.json
-        0  2026-11-28 03:23   com/
-        0  2026-11-28 03:23   com/morphzuka/
-    20976  2026-11-28 03:23   com/morphzuka/MorphZukaClient.java
-        0  2026-11-28 03:23   com/morphzuka/net/
-    18331  2026-11-28 03:23   com/morphzuka/net/ServerNet.java
-    14504  2026-11-28 03:23   com/morphzuka/net/ModelSync.java
+        0  2026-11-28 03:54   META-INF/
+       25  2026-11-28 03:54   META-INF/MANIFEST.MF
+        0  2026-11-28 03:54   assets/
+        0  2026-11-28 03:54   assets/minecraft/
+        0  2026-11-28 03:54   assets/minecraft/models/
+        0  2026-11-28 03:54   assets/minecraft/models/item/
+      256  2026-11-28 03:54   assets/minecraft/models/item/carrot_on_a_stick.json
+        0  2026-11-28 03:54   assets/morphzuka/
+        0  2026-11-28 03:54   assets/morphzuka/models/
+        0  2026-11-28 03:54   assets/morphzuka/models/item/
+      106  2026-11-28 03:54   assets/morphzuka/models/item/brochazuka.json
+    15090  2026-11-28 03:54   assets/morphzuka/models/item/brochazuka_3d.json
+        0  2026-11-28 03:54   assets/morphzuka/textures/
+        0  2026-11-28 03:54   assets/morphzuka/textures/item/
+      456  2026-11-28 03:54   assets/morphzuka/textures/item/itemrodillo.png
+      789  2026-11-28 03:54   assets/morphzuka/textures/item/rodillozuka.png
+        0  2026-11-28 03:54   assets/morphzuka/lang/
+      278  2026-11-28 03:54   assets/morphzuka/lang/en_us.json
+      293  2026-11-28 03:54   assets/morphzuka/lang/es_es.json
+      460  2026-11-28 03:54   fabric.mod.json
+      591  2026-11-28 03:54   morphzuka.mixins.json
+        0  2026-11-28 03:54   com/
+        0  2026-11-28 03:54   com/morphzuka/
+    22438  2026-11-28 03:54   com/morphzuka/MorphZukaClient.java
+        0  2026-11-28 03:54   com/morphzuka/net/
+    23057  2026-11-28 03:54   com/morphzuka/net/ServerNet.java
+    14504  2026-11-28 03:54   com/morphzuka/net/ModelSync.java
 ## /tmp/proj/build/libs/morphzuka-1.0.0-sources.jar
 Archive:  /tmp/proj/build/libs/morphzuka-1.0.0-sources.jar
   Length      Date    Time    Name
 ---------  ---------- -----   ----
-      378  2026-11-28 03:24   META-INF/MANIFEST.MF
-        0  2026-11-28 03:24   com/
-        0  2026-11-28 03:24   com/morphzuka/
-    20906  2026-11-28 03:24   com/morphzuka/MorphZukaClient.java
-        0  2026-11-28 03:24   com/morphzuka/net/
-    18193  2026-11-28 03:24   com/morphzuka/net/ServerNet.java
-    14463  2026-11-28 03:24   com/morphzuka/net/ModelSync.java
-    10406  2026-11-28 03:24   com/morphzuka/net/Payloads.java
-     5573  2026-11-28 03:24   com/morphzuka/net/ClientNet.java
-     2283  2026-11-28 03:24   com/morphzuka/net/GestureSync.java
-     3563  2026-11-28 03:24   com/morphzuka/HitboxOverride.java
-        0  2026-11-28 03:24   com/morphzuka/render/
-     3061  2026-11-28 03:24   com/morphzuka/render/TexPixels.java
-     1220  2026-11-28 03:24   com/morphzuka/render/PreviewSim.java
-    18736  2026-11-28 03:24   com/morphzuka/render/Surface.java
-    19693  2026-11-28 03:24   com/morphzuka/render/MorphManager.java
-    47579  2026-11-28 03:24   com/morphzuka/render/BBRenderer.java
-     2710  2026-11-28 03:24   com/morphzuka/render/Forms.java
-    14326  2026-11-28 03:24   com/morphzuka/render/PropRender.java
-     4327  2026-11-28 03:24   com/morphzuka/render/Transition.java
-     4811  2026-11-28 03:24   com/morphzuka/render/Form.java
-    10107  2026-11-28 03:24   com/morphzuka/render/EntityCfg.java
-    15651  2026-11-28 03:24   com/morphzuka/render/CubeSwarm.java
-    14398  2026-11-28 03:24   com/morphzuka/render/ClassAnimScan.java
-     4770  2026-11-28 03:24   com/morphzuka/render/PartTree.java
-    15407  2026-11-28 03:24   com/morphzuka/render/Physics.java
-     7653  2026-11-28 03:24   com/morphzuka/render/PartTex.java
+      378  2026-11-28 03:54   META-INF/MANIFEST.MF
+        0  2026-11-28 03:54   com/
+        0  2026-11-28 03:54   com/morphzuka/
+    22378  2026-11-28 03:54   com/morphzuka/MorphZukaClient.java
+        0  2026-11-28 03:54   com/morphzuka/net/
+    22660  2026-11-28 03:54   com/morphzuka/net/ServerNet.java
+    14463  2026-11-28 03:54   com/morphzuka/net/ModelSync.java
+    11057  2026-11-28 03:54   com/morphzuka/net/Payloads.java
+     7179  2026-11-28 03:54   com/morphzuka/net/ClientNet.java
+     2283  2026-11-28 03:54   com/morphzuka/net/GestureSync.java
+     3563  2026-11-28 03:54   com/morphzuka/HitboxOverride.java
+        0  2026-11-28 03:54   com/morphzuka/render/
+     3061  2026-11-28 03:54   com/morphzuka/render/TexPixels.java
+     1220  2026-11-28 03:54   com/morphzuka/render/PreviewSim.java
+    18736  2026-11-28 03:54   com/morphzuka/render/Surface.java
+    23847  2026-11-28 03:54   com/morphzuka/render/MorphManager.java
+    47579  2026-11-28 03:54   com/morphzuka/render/BBRenderer.java
+     2710  2026-11-28 03:54   com/morphzuka/render/Forms.java
+    14326  2026-11-28 03:54   com/morphzuka/render/PropRender.java
+     4327  2026-11-28 03:54   com/morphzuka/render/Transition.java
+     4811  2026-11-28 03:54   com/morphzuka/render/Form.java
+     3881  2026-11-28 03:54   com/morphzuka/render/MorphTarget.java
+    10107  2026-11-28 03:54   com/morphzuka/render/EntityCfg.java
+    15651  2026-11-28 03:54   com/morphzuka/render/CubeSwarm.java
+    14398  2026-11-28 03:54   com/morphzuka/render/ClassAnimScan.java
+     4770  2026-11-28 03:54   com/morphzuka/render/PartTree.java
+    15407  2026-11-28 03:54   com/morphzuka/render/Physics.java
 ## /tmp/proj/build/libs/morphzuka-1.0.0.jar
 Archive:  /tmp/proj/build/libs/morphzuka-1.0.0.jar
   Length      Date    Time    Name
@@ -305,8 +307,8 @@ Archive:  /tmp/proj/build/libs/morphzuka-1.0.0.jar
       256  1980-01-01 00:00   assets/minecraft/models/item/carrot_on_a_stick.json
         0  1980-01-01 00:00   assets/morphzuka/
         0  1980-01-01 00:00   assets/morphzuka/lang/
-      231  1980-01-01 00:00   assets/morphzuka/lang/en_us.json
-      243  1980-01-01 00:00   assets/morphzuka/lang/es_es.json
+      278  1980-01-01 00:00   assets/morphzuka/lang/en_us.json
+      293  1980-01-01 00:00   assets/morphzuka/lang/es_es.json
         0  1980-01-01 00:00   assets/morphzuka/models/
         0  1980-01-01 00:00   assets/morphzuka/models/item/
       106  1980-01-01 00:00   assets/morphzuka/models/item/brochazuka.json
@@ -317,7 +319,7 @@ Archive:  /tmp/proj/build/libs/morphzuka-1.0.0.jar
       789  1980-01-01 00:00   assets/morphzuka/textures/item/rodillozuka.png
         0  1980-01-01 00:00   com/
         0  1980-01-01 00:00   com/morphzuka/
-     5246  1980-01-01 00:00   com/morphzuka/BlockLock.class
+     5726  1980-01-01 00:00   com/morphzuka/BlockLock.class
      1862  1980-01-01 00:00   com/morphzuka/BlockMorphRegistry.class
      1012  1980-01-01 00:00   com/morphzuka/Gestures$Remote.class
 ## /tmp/proj/build/processIncludeJars/jcodec-0.2.5.jar
