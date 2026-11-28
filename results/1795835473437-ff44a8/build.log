@@ -1,0 +1,174 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.9.2
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1795835510278.json
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/tmp/proj/build.gradle' line: 6
+
+* What went wrong:
+A problem occurred evaluating root project 'proj'.
+> Could not get unknown property 'mod_version' for root project 'proj' of type org.gradle.api.Project.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 5s
+
+===== DIAGNOSTICO =====
+--- Archivos que recibio GitHub ---
+./README.md
+./build.gradle
+./settings.gradle
+./src/main/java/com/morphzuka/BlockLock.java
+./src/main/java/com/morphzuka/BlockMorphRegistry.java
+./src/main/java/com/morphzuka/Gestures.java
+./src/main/java/com/morphzuka/GunItem.java
+./src/main/java/com/morphzuka/HitboxOverride.java
+./src/main/java/com/morphzuka/HitboxRegistry.java
+./src/main/java/com/morphzuka/MorphZuka.java
+./src/main/java/com/morphzuka/MorphZukaClient.java
+./src/main/java/com/morphzuka/MorpherGun.java
+./src/main/java/com/morphzuka/MzServerConfig.java
+./src/main/java/com/morphzuka/Role.java
+./src/main/java/com/morphzuka/compat/SvcPlugin.java
+./src/main/java/com/morphzuka/mixin/ArmorFeatureRendererMixin.java
+./src/main/java/com/morphzuka/mixin/CameraMixin.java
+./src/main/java/com/morphzuka/mixin/CapeFeatureRendererMixin.java
+./src/main/java/com/morphzuka/mixin/ElytraFeatureRendererMixin.java
+./src/main/java/com/morphzuka/mixin/EntityCollidableMixin.java
+./src/main/java/com/morphzuka/mixin/EntityShadowMixin.java
+./src/main/java/com/morphzuka/mixin/HeldItemFeatureRendererMixin.java
+./src/main/java/com/morphzuka/mixin/ItemRendererMixin.java
+./src/main/java/com/morphzuka/mixin/KeyboardInputMixin.java
+./src/main/java/com/morphzuka/mixin/LivingEntityRendererMixin.java
+./src/main/java/com/morphzuka/mixin/LivingPushableMixin.java
+./src/main/java/com/morphzuka/mixin/ModelPartAccessor.java
+./src/main/java/com/morphzuka/mixin/ModelPartMixin.java
+./src/main/java/com/morphzuka/mixin/PlayerDimensionsMixin.java
+./src/main/java/com/morphzuka/mixin/PlayerEntityRendererMixin.java
+./src/main/java/com/morphzuka/mixin/ShoulderParrotFeatureRendererMixin.java
+./src/main/java/com/morphzuka/model/AnimConfig.java
+./src/main/java/com/morphzuka/model/AnimIO.java
+./src/main/java/com/morphzuka/model/AnimScan.java
+./src/main/java/com/morphzuka/model/AnimStates.java
+./src/main/java/com/morphzuka/model/BBModel.java
+./src/main/java/com/morphzuka/model/CubeXform.java
+./src/main/java/com/morphzuka/model/ModelBounds.java
+./src/main/java/com/morphzuka/model/ModelBundle.java
+./src/main/java/com/morphzuka/model/ModelImporter.java
+./src/main/java/com/morphzuka/model/ModelLoader.java
+./src/main/java/com/morphzuka/model/ModelManager.java
+./src/main/java/com/morphzuka/model/ModelShare.java
+./src/main/java/com/morphzuka/model/RemoteModels.java
+./src/main/java/com/morphzuka/model/VanillaPlayer.java
+./src/main/java/com/morphzuka/net/ClientNet.java
+./src/main/java/com/morphzuka/net/GestureSync.java
+./src/main/java/com/morphzuka/net/ModelSync.java
+./src/main/java/com/morphzuka/net/Payloads.java
+./src/main/java/com/morphzuka/net/ServerNet.java
+./src/main/java/com/morphzuka/render/Anchors.java
+./src/main/java/com/morphzuka/render/BBRenderer.java
+./src/main/java/com/morphzuka/render/ClassAnimScan.java
+./src/main/java/com/morphzuka/render/CubeSwarm.java
+./src/main/java/com/morphzuka/render/EntityCfg.java
+./src/main/java/com/morphzuka/render/Form.java
+./src/main/java/com/morphzuka/render/Forms.java
+./src/main/java/com/morphzuka/render/MorphAnim.java
+./src/main/java/com/morphzuka/render/MorphManager.java
+./src/main/java/com/morphzuka/render/PartTex.java
+./src/main/java/com/morphzuka/render/PartTree.java
+./src/main/java/com/morphzuka/render/Physics.java
+./src/main/java/com/morphzuka/render/PreviewSim.java
+./src/main/java/com/morphzuka/render/PropRender.java
+./src/main/java/com/morphzuka/render/Surface.java
+./src/main/java/com/morphzuka/render/TexPixels.java
+./src/main/java/com/morphzuka/render/Transition.java
+./src/main/java/com/morphzuka/screen/AnimConfigScreen.java
+./src/main/java/com/morphzuka/screen/EditorScreen.java
+./src/main/java/com/morphzuka/screen/EntityAnimScreen.java
+./src/main/java/com/morphzuka/screen/ModelScreen.java
+./src/main/java/com/morphzuka/screen/RadialScreen.java
+./src/main/java/com/morphzuka/screen/SliderScreen.java
+./src/main/java/com/morphzuka/ui/Background.java
+./src/main/java/com/morphzuka/ui/Gfx.java
+./src/main/java/com/morphzuka/ui/MorphPreview.java
+./src/main/java/com/morphzuka/ui/Theme.java
+./src/main/java/com/morphzuka/ui/VideoDecoder.java
+./src/main/java/com/morphzuka/ui/VideoLoader.java
+./src/main/java/com/morphzuka/voice/VoiceState.java
+./src/main/resources/assets/minecraft/models/item/carrot_on_a_stick.json
+./src/main/resources/assets/morphzuka/lang/en_us.json
+./src/main/resources/assets/morphzuka/lang/es_es.json
+./src/main/resources/assets/morphzuka/models/item/brochazuka.json
+./src/main/resources/assets/morphzuka/models/item/brochazuka_3d.json
+./src/main/resources/assets/morphzuka/textures/item/itemrodillo.png
+./src/main/resources/assets/morphzuka/textures/item/rodillozuka.png
+./src/main/resources/fabric.mod.json
+./src/main/resources/morphzuka.mixins.json
+--- build.gradle ---
+plugins {
+    id 'fabric-loom' version '1.9-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base { archivesName = project.archives_base_name }
+
+def withVoice = project.withVoice.toBoolean()
+def withVideo = project.withVideo.toBoolean()
+
+repositories {
+    mavenCentral()
+    maven { name = 'MaxHenkel'; url = 'https://maven.maxhenkel.de/repository/public' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Simple Voice Chat (API de plugins): solo para compilar; el mod real es opcional en runtime
+    if (withVoice) modCompileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+
+    // JCodec (mp4/H.264 en Java puro) para fondos de video; va empaquetado dentro del jar
+    if (withVideo) {
+        implementation "org.jcodec:jcodec:${project.jcodec_version}"
+        implementation "org.jcodec:jcodec-javase:${project.jcodec_version}"
+        include "org.jcodec:jcodec:${project.jcodec_version}"
+        include "org.jcodec:jcodec-javase:${project.jcodec_version}"
+    }
+}
+
+sourceSets.main.java {
+    if (!withVoice) exclude 'com/morphzuka/compat/**'
+    if (!withVideo) exclude 'com/morphzuka/ui/VideoDecoder.java'
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") { expand "version": project.version }
+}
+
+tasks.withType(JavaCompile).configureEach { it.options.release = 21; it.options.encoding = 'UTF-8' }
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+--- Version de Gradle ---
+Gradle 8.12.1
+--- Recursos procesados ---
+--- .jar generados ---
+===== FIN DIAGNOSTICO =====
